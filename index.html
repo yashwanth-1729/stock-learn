@@ -292,6 +292,24 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   border:2px solid var(--hard);font-size:13px
 }
 
+/* ============================================================ seasonality */
+#seasonTable{min-width:760px;font-size:12px}
+#seasonTable th,#seasonTable td{padding:7px 6px;text-align:center}
+#seasonTable th:first-child,#seasonTable td:first-child{text-align:left;font-weight:700}
+#seasonTable td.cell{font-family:var(--fm);font-size:11.5px;font-weight:700;color:#101014}
+#seasonTable td.na{color:var(--ink3);background:transparent}
+#seasonTable tfoot td{
+  border-top:2px solid var(--hard);font-weight:700;background:var(--hi-soft);
+  font-family:var(--fm);font-size:11.5px
+}
+#seasonTable tfoot tr:last-child td{background:transparent;font-size:10.5px;color:var(--ink2)}
+.seasonlegend{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px;
+  font-family:var(--fm);font-size:10px;letter-spacing:.06em;color:var(--ink3)
+}
+.seasonlegend .lg{display:inline-flex;align-items:center;gap:5px}
+.seasonlegend .sw{width:13px;height:13px;display:inline-block}
+
 /* ============================================================ compare */
 .cmpchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .cmpchip{
@@ -325,15 +343,15 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 #mnav{display:none}
 @media (max-width:720px){
   #mnav{
-    display:grid;grid-template-columns:repeat(6,1fr);position:fixed;
+    display:grid;grid-template-columns:repeat(7,1fr);position:fixed;
     left:0;right:0;bottom:0;z-index:60;background:var(--hi);
     border-top:2px solid var(--hard);
     padding-bottom:env(safe-area-inset-bottom,0)
   }
   #mnav button{
     appearance:none;background:none;border:none;cursor:pointer;
-    font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.06em;
-    text-transform:uppercase;color:#6B5B00;padding:11px 2px 10px;line-height:1.25;
+    font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.02em;
+    text-transform:uppercase;color:#6B5B00;padding:11px 1px 10px;line-height:1.25;
     border-right:2px solid rgba(16,16,20,.14)
   }
   #mnav button:last-child{border-right:none}
@@ -382,31 +400,42 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   #windowSeg .chip{padding:11px 6px;text-align:center;min-height:44px}
   .btn-reset{min-height:38px;padding:8px 13px}
 
-  /* Wide tables are miserable on a phone, so each row becomes its own card. */
-  .tablewrap{overflow:visible;padding:0;background:none;box-shadow:none}
-  .tablewrap table{min-width:0;display:block}
-  .tablewrap thead{display:none}
-  .tablewrap tbody{display:block}
-  .tablewrap tbody tr{
+  /* Wide tables are miserable on a phone, so each row becomes its own card. The
+     seasonality grid is the exception: it IS a matrix, so it keeps its shape and
+     scrolls sideways instead. */
+  .tablewrap.keepgrid{overflow-x:auto}
+  .tablewrap.keepgrid table{min-width:700px;display:table}
+  .tablewrap.keepgrid thead{display:table-header-group}
+  .tablewrap.keepgrid tbody{display:table-row-group}
+  .tablewrap.keepgrid tr{display:table-row;background:none;border:none;box-shadow:none;
+    margin:0;padding:0}
+  .tablewrap.keepgrid td{display:table-cell;text-align:center;border-bottom:none;padding:6px 5px}
+  .tablewrap.keepgrid td::before{content:none}
+  .tablewrap.keepgrid td.y{display:table-cell;font-size:12px;border-bottom:none;margin:0;padding:6px 5px}
+  .tablewrap:not(.keepgrid){overflow:visible;padding:0;background:none;box-shadow:none}
+  .tablewrap:not(.keepgrid) table{min-width:0;display:block}
+  .tablewrap:not(.keepgrid) thead{display:none}
+  .tablewrap:not(.keepgrid) tbody{display:block}
+  .tablewrap:not(.keepgrid) tbody tr{
     display:block;background:var(--surface);border:2px solid var(--hard);
     box-shadow:4px 4px 0 var(--hard);margin-bottom:14px;padding:11px 13px
   }
-  .tablewrap tbody tr:hover{background:var(--hi-soft)}
-  .tablewrap td{
+  .tablewrap:not(.keepgrid) tbody tr:hover{background:var(--hi-soft)}
+  .tablewrap:not(.keepgrid) td{
     display:flex;justify-content:space-between;align-items:baseline;gap:12px;
     padding:5px 0;white-space:normal;text-align:right;border-bottom:1px dotted var(--line)
   }
-  .tablewrap td:last-child{border-bottom:none}
-  .tablewrap td::before{
+  .tablewrap:not(.keepgrid) td:last-child{border-bottom:none}
+  .tablewrap:not(.keepgrid) td::before{
     content:attr(data-l);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
     color:var(--ink3);font-weight:700;text-align:left;flex:0 0 auto
   }
   /* the year cell reads as the card's title */
-  .tablewrap td.y{
+  .tablewrap:not(.keepgrid) td.y{
     display:block;text-align:left;font-size:21px;padding:0 0 8px;
     border-bottom:2px solid var(--hard);margin-bottom:6px
   }
-  .tablewrap td.y::before{content:none}
+  .tablewrap:not(.keepgrid) td.y::before{content:none}
   .tablewrap tr.partial td.y::after{content:' YTD';font-size:10px;color:var(--ink3)}
   .chip-ret{min-width:0}
   .moverow .why{white-space:normal;overflow:visible}
@@ -548,10 +577,43 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   </div>
 </section>
 
+<section id="season">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">06</span><h2>Seasonality</h2>
+      <p>The same calendar month, stacked across every year on record. Useful for spotting whether a
+      pattern is real or just one loud year — the hit rate and the spread matter more than the average,
+      and both are shown. This is a description of what happened, not a prediction of what will.</p>
+    </div>
+    <div class="neu yblock">
+      <div class="tablewrap keepgrid" style="margin:0">
+        <table id="seasonTable">
+          <thead><tr id="seasonHead"></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <div class="seasonlegend">
+        <span class="lg"><span class="sw" style="background:#1B7F4B"></span>Strong gain</span>
+        <span class="lg"><span class="sw" style="background:#9AD9B6"></span>Gain</span>
+        <span class="lg"><span class="sw" style="background:#EFEFEF;border:1px solid #D3D7E0"></span>Flat</span>
+        <span class="lg"><span class="sw" style="background:#F3B8AE"></span>Loss</span>
+        <span class="lg"><span class="sw" style="background:#C0392B"></span>Heavy loss</span>
+        <span class="lg" style="margin-left:auto">Cell shows that month's return; colour scales with size.</span>
+      </div>
+      <div class="stats" id="seasonStats"></div>
+      <div class="neu-in chartbox sm" style="margin-top:18px"><canvas id="seasonChart"></canvas></div>
+      <p class="mono" style="font-size:11px;color:#7C8291;margin:10px 2px 0">
+        Bars are the average return for each month; the number under each is how often that month
+        finished positive.</p>
+    </div>
+  </div>
+</section>
+
 <section id="compare">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">06</span><h2>Compare</h2>
+      <span class="snum">07</span><h2>Compare</h2>
       <p>Up to four instruments on one chart. Everything is rebased to 100 at the start of the window,
       so a ₹200 share and a 24,000-point index become directly comparable — the line that ends highest
       grew the most, whatever it costs.</p>
@@ -593,7 +655,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <section id="sim">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">07</span><h2>If I invested ₹10,000 at the start of each year</h2>
+      <span class="snum">08</span><h2>If I invested ₹10,000 at the start of each year</h2>
       <p>A <b>simple price-return simulation</b>. Each year stands alone — ₹10,000 goes in on the first
       trading day and comes out on the last. No dividends, no taxes, no brokerage, no inflation, and
       nothing is carried from one year into the next.</p>
@@ -615,7 +677,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <section id="moves">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">08</span><h2>The biggest single days</h2>
+      <span class="snum">09</span><h2>The biggest single days</h2>
       <p>Detected straight from the data — every session that moved more than
       <b id="movesCaption">2.5</b>% either way, ranked. That threshold is derived from this
       instrument's own typical daily move, so it adapts to a calm index or a volatile stock.
@@ -634,7 +696,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <section id="actions">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">09</span><h2>Corporate actions</h2>
+      <span class="snum">10</span><h2>Corporate actions</h2>
       <p>Splits and dividends reported by the exchange feed for this instrument. Nothing here is
       written by hand — each company carries its own record, so it is empty for an index.</p>
     </div>
@@ -644,7 +706,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 
 <section id="notes">
   <div class="wrap">
-    <div class="shead"><span class="snum">10</span><h2>Source &amp; method</h2></div>
+    <div class="shead"><span class="snum">11</span><h2>Source &amp; method</h2></div>
     <div class="neu notes">
       <h4>Data source</h4>
       <p>Daily open / high / low / close for the NIFTY 50 price index, built from two sources and
@@ -741,6 +803,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   <button data-go="summary"><span class="ic" aria-hidden="true">▦</span>Years</button>
   <button data-go="years"><span class="ic" aria-hidden="true">▲</span>Charts</button>
   <button data-go="range"><span class="ic" aria-hidden="true">◧</span>Range</button>
+  <button data-go="season"><span class="ic" aria-hidden="true">▦</span>Season</button>
   <button data-go="compare"><span class="ic" aria-hidden="true">◫</span>Compare</button>
   <button data-go="sim"><span class="ic" aria-hidden="true">₹</span>10k</button>
 </nav>
@@ -1450,6 +1513,155 @@ function rebuildYears(){
   }
 }
 
+/* ================================================================= seasonality */
+/* Month returns are computed close-to-close: the last close of the previous month to
+   the last close of this one, so every trading day belongs to exactly one month and
+   nothing is double counted at the boundaries. */
+function monthlyReturns(){
+  if(ROWS.length<2)return[];
+  const ends=[];
+  for(let i=0;i<ROWS.length;i++){
+    const nxt=ROWS[i+1];
+    if(!nxt||nxt.y!==ROWS[i].y||new Date(nxt.t).getMonth()!==new Date(ROWS[i].t).getMonth())
+      ends.push(ROWS[i]);
+  }
+  const out=[];
+  for(let k=1;k<ends.length;k++){
+    const prev=ends[k-1],cur=ends[k];
+    out.push({y:cur.y,m:new Date(cur.t).getMonth(),
+      r:(cur.c-prev.c)/prev.c*100,partial:false});
+  }
+  /* the first month in the record is incomplete — it has no prior month-end to measure from */
+  return out;
+}
+
+/* Diverging scale: one hue each side of a neutral midpoint, intensity by magnitude. */
+function seasonColor(v,scale){
+  if(v==null)return"transparent";
+  const t=Math.min(1,Math.abs(v)/scale);
+  const a=0.12+t*0.78;
+  return v>=0?"rgba(27,127,75,"+a.toFixed(3)+")":"rgba(192,57,43,"+a.toFixed(3)+")";
+}
+
+function renderSeason(){
+  const data=monthlyReturns();
+  const head=document.getElementById("seasonHead");
+  const tb=document.querySelector("#seasonTable tbody");
+  const tf=document.querySelector("#seasonTable tfoot");
+  const stats=document.getElementById("seasonStats");
+  if(!data.length){
+    head.innerHTML="";tb.innerHTML="";tf.innerHTML="";stats.innerHTML="";
+    if(CHARTS.season){CHARTS.season.destroy();delete CHARTS.season;}
+    return;
+  }
+
+  const years=[...new Set(data.map(d=>d.y))].sort((a,b)=>a-b);
+  const grid={};
+  data.forEach(d=>{grid[d.y+"-"+d.m]=d.r;});
+
+  /* 90th percentile of magnitude sets the colour scale, so one crash does not
+     wash every other cell out to nearly white */
+  const mags=data.map(d=>Math.abs(d.r)).sort((a,b)=>a-b);
+  const scale=Math.max(2,mags[Math.floor(mags.length*0.9)]||6);
+
+  head.innerHTML='<th>Year</th>'+MON.map(m=>'<th>'+m+'</th>').join("")+'<th>Year</th>';
+
+  tb.innerHTML=years.map(y=>{
+    let cells="",prod=1,seen=0;
+    for(let m=0;m<12;m++){
+      const v=grid[y+"-"+m];
+      if(v==null){cells+='<td class="na">·</td>';continue;}
+      prod*=(1+v/100);seen++;
+      cells+='<td class="cell" style="background:'+seasonColor(v,scale)+'">'
+        +(v>=0?"+":"−")+Math.abs(v).toFixed(1)+'</td>';
+    }
+    const tot=seen?(prod-1)*100:null;
+    return '<tr><td>'+y+'</td>'+cells+'<td class="cell" style="background:'
+      +seasonColor(tot,scale*2.2)+'">'+(tot==null?"·":(tot>=0?"+":"−")+Math.abs(tot).toFixed(1))+'</td></tr>';
+  }).join("");
+
+  /* per-month aggregates */
+  const agg=[];
+  for(let m=0;m<12;m++){
+    const vs=data.filter(d=>d.m===m).map(d=>d.r);
+    if(!vs.length){agg.push(null);continue;}
+    const avg=vs.reduce((a,b)=>a+b,0)/vs.length;
+    const sorted=[...vs].sort((a,b)=>a-b);
+    const med=sorted[Math.floor(sorted.length/2)];
+    const up=vs.filter(v=>v>0).length;
+    agg.push({m,avg,med,up,n:vs.length,hit:up/vs.length*100,
+      best:sorted[sorted.length-1],worst:sorted[0]});
+  }
+  tf.innerHTML='<tr><td>Average</td>'
+    +agg.map(a=>'<td style="background:'+seasonColor(a?a.avg:null,scale/1.6)+'">'
+      +(a?(a.avg>=0?"+":"−")+Math.abs(a.avg).toFixed(1):"·")+'</td>').join("")
+    +'<td></td></tr>'
+    +'<tr><td>Positive</td>'
+    +agg.map(a=>'<td>'+(a?a.up+"/"+a.n:"·")+'</td>').join("")+'<td></td></tr>';
+
+  const rank=agg.filter(Boolean).slice().sort((a,b)=>b.avg-a.avg);
+  const bestM=rank[0],worstM=rank[rank.length-1];
+  const mostRel=agg.filter(Boolean).slice().sort((a,b)=>b.hit-a.hit)[0];
+  const leastRel=agg.filter(Boolean).slice().sort((a,b)=>a.hit-b.hit)[0];
+  stats.innerHTML=
+    statCard("Strongest month",MON[bestM.m],"avg "+pct(bestM.avg)+" · "+bestM.up+"/"+bestM.n+" positive",cls(bestM.avg))
+   +statCard("Weakest month",MON[worstM.m],"avg "+pct(worstM.avg)+" · "+worstM.up+"/"+worstM.n+" positive",cls(worstM.avg))
+   +statCard("Most consistent",MON[mostRel.m],mostRel.hit.toFixed(0)+"% of years positive")
+   +statCard("Least consistent",MON[leastRel.m],leastRel.hit.toFixed(0)+"% of years positive")
+   +statCard("Months measured",String(data.length),years.length+" calendar years");
+
+  if(!READY)return;
+  if(CHARTS.season){CHARTS.season.destroy();delete CHARTS.season;}
+  CHARTS.season=new Chart(document.getElementById("seasonChart").getContext("2d"),{
+    type:"bar",
+    data:{labels:MON,datasets:[{
+      data:agg.map(a=>a?a.avg:0),
+      backgroundColor:agg.map(a=>a&&a.avg>=0?"rgba(47,169,107,.85)":"rgba(224,85,69,.85)"),
+      borderColor:agg.map(a=>a&&a.avg>=0?"#1B7F4B":"#C0392B"),
+      borderWidth:2,borderRadius:4,borderSkipped:false
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      layout:{padding:{top:20,bottom:6}},
+      scales:{
+        x:{grid:{display:false},border:{color:"#C7CBD5"},
+           ticks:{font:{size:10.5,weight:"700"},color:"#4A4F5C"}},
+        y:{grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+           ticks:{callback:v=>v+"%",font:{size:10},color:"#7C8291"}}
+      },
+      plugins:{
+        legend:{display:false},
+        annotation:{annotations:{zero:{type:"line",yMin:0,yMax:0,
+          borderColor:"rgba(16,16,20,.5)",borderWidth:1.5}}},
+        tooltip:{backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+          cornerRadius:0,padding:10,displayColors:false,
+          callbacks:{label:it=>{
+            const a=agg[it.dataIndex];if(!a)return"";
+            return["Average  "+pct(a.avg),"Median   "+pct(a.med),
+                   "Positive "+a.up+" of "+a.n+" years",
+                   "Best     "+pct(a.best),"Worst    "+pct(a.worst)];
+          }}}
+      }
+    },
+    plugins:[{
+      id:"seasonLabels",
+      afterDatasetsDraw(c){
+        const ctx=c.ctx;ctx.save();
+        ctx.font="700 10px 'JetBrains Mono',monospace";ctx.textAlign="center";
+        c.getDatasetMeta(0).data.forEach((b,i)=>{
+          const a=agg[i];if(!a)return;
+          ctx.fillStyle=a.avg>=0?"#1B7F4B":"#C0392B";
+          ctx.textBaseline=a.avg>=0?"bottom":"top";
+          ctx.fillText((a.avg>=0?"+":"−")+Math.abs(a.avg).toFixed(1),b.x,b.y+(a.avg>=0?-14:14));
+          ctx.fillStyle="#7C8291";
+          ctx.fillText(a.up+"/"+a.n,b.x,b.y+(a.avg>=0?-3:25));
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
 /* ================================================================= compare */
 /* Categorical hues in fixed order — a series keeps its colour when others are removed.
    Validated for colour-vision separation against this page's surface. */
@@ -1759,6 +1971,7 @@ function boot(isRefresh){
   renderChrome(nBig);
   renderActions();
   renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();
+  renderSeason();
   /* Seed the comparison once, from data already in memory, so the section is never
      an empty box on arrival. After that it is the reader's to curate. */
   if(!CMP.seeded){
@@ -1783,7 +1996,8 @@ document.addEventListener("click",e=>{
   if(wb){
     WINDOW=wb.dataset.win;
     document.querySelectorAll("#windowSeg .chip").forEach(c=>c.classList.toggle("on",c.dataset.win===WINDOW));
-    renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();return;
+    renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();
+  renderSeason();return;
   }
   const pb=e.target.closest("[data-p]");
   if(pb){
