@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Investment Calculator — Indian Market</title>
+<meta name="description" content="Work out what an investment would have become on real Indian market history, or what it could become at an assumed rate of return.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#E9EBF0; --surface:#E9EBF0; --sd:#C2C5CE; --sl:#FFFFFF;
+  --ink:#101014; --ink2:#4A4F5C; --ink3:#7C8291; --line:#D3D7E0;
+  --pos:#1B7F4B; --posf:#2FA96B; --neg:#C0392B; --negf:#E05545;
+  --accent:#2C2CE0; --hi:#FFE24D; --hi-soft:#FFF6CE; --hard:#101014;
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fd);
+  font-size:15px;line-height:1.55;overflow-x:hidden}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+a{color:var(--accent)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--ink3)}
+.neu{background:var(--surface);border-radius:var(--r);
+  box-shadow:7px 7px 16px var(--sd),-7px -7px 16px var(--sl)}
+.neu-in{background:var(--surface);border-radius:var(--r);
+  box-shadow:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl)}
+
+header{padding:34px 0 8px}
+.masthead{padding:26px 26px;background:var(--hi);border:2px solid var(--hard);
+  box-shadow:8px 8px 0 var(--hard)}
+.eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-weight:700;margin-bottom:12px}
+h1{font-size:clamp(26px,5.4vw,46px);text-transform:uppercase;letter-spacing:-.035em}
+.sub{margin-top:12px;font-size:14px;color:#3A3A20;max-width:64ch}
+.backlink{display:inline-block;margin-top:16px;font-family:var(--fm);font-size:11px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;
+  background:var(--surface);border:2px solid var(--hard);color:var(--hard);text-decoration:none}
+.backlink:hover{background:var(--hard);color:var(--hi)}
+
+section{padding:26px 0}
+.shead{display:flex;align-items:flex-end;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.snum{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.1em;
+  background:var(--hi);color:var(--hard);border:2px solid var(--hard);
+  box-shadow:3px 3px 0 var(--hard);padding:4px 8px;line-height:1}
+.shead h2{font-size:clamp(19px,3.4vw,26px);text-transform:uppercase;
+  background-image:linear-gradient(transparent 58%,var(--hi) 58%,var(--hi) 94%,transparent 94%);
+  padding-right:.15em}
+.shead p{margin:0;font-size:13px;color:var(--ink3);flex-basis:100%;max-width:78ch}
+
+.chip{font-family:var(--fm);font-size:12.5px;font-weight:700;padding:10px 14px;cursor:pointer;
+  background:var(--surface);color:var(--ink2);border:2px solid transparent;border-radius:11px;
+  box-shadow:4px 4px 9px var(--sd),-4px -4px 9px var(--sl);transition:all .13s}
+.chip:hover{color:var(--ink);background:var(--hi-soft)}
+.chip.on{background:var(--hi);color:var(--hard);border:2px solid var(--hard);
+  border-radius:0;box-shadow:4px 4px 0 var(--hard)}
+.seg{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+
+.form{padding:22px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field label{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);font-weight:700}
+.field input,.field select{font-family:var(--fm);font-size:15px;padding:11px 13px;color:var(--ink);
+  background:var(--surface);border:2px solid var(--hard);border-radius:0;width:100%;min-width:0}
+.field input:focus,.field select:focus{outline:none;background:var(--hi-soft)}
+.field .note{font-family:var(--fm);font-size:10.5px;color:var(--ink3)}
+.pbox{position:relative}
+.presults{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:50;max-height:300px;
+  overflow-y:auto;background:var(--surface);border:2px solid var(--hard);box-shadow:6px 6px 0 var(--hard)}
+.presults button{display:flex;width:100%;gap:10px;align-items:baseline;text-align:left;cursor:pointer;
+  background:none;border:none;border-bottom:1px solid var(--line);padding:10px 12px;
+  font-family:var(--fm);font-size:12.5px;color:var(--ink)}
+.presults button:hover{background:var(--hi)}
+.presults .sym{font-weight:700} .presults .nm{color:var(--ink2);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+.presults .ex{font-size:9.5px;letter-spacing:.1em;color:var(--ink3)}
+.presults .empty{padding:12px;font-family:var(--fm);font-size:12px;color:var(--ink3)}
+
+.results{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:22px}
+.rcard{padding:18px}
+.rcard .k{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.rcard .v{font-family:var(--fm);font-size:clamp(21px,3.6vw,29px);font-weight:700;margin-top:8px;
+  letter-spacing:-.02em;overflow-wrap:anywhere}
+.rcard .s{font-size:12px;color:var(--ink2);margin-top:4px}
+.rcard.accent{background:var(--hi);border:2px solid var(--hard);border-radius:0;
+  box-shadow:6px 6px 0 var(--hard)}
+.rcard.accent .k{color:#6B5B00} .rcard.accent .v,.rcard.accent .s{color:var(--hard)}
+
+.chartbox{position:relative;height:360px;padding:14px 8px 4px;border-radius:12px;margin-top:22px}
+.tablewrap{overflow-x:auto;border-radius:var(--r);padding:6px;margin-top:22px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-family:var(--fm);font-size:13px}
+th,td{padding:10px 12px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--hard);
+  font-weight:700;background:var(--hi);border-top:2px solid var(--hard);border-bottom:2px solid var(--hard)}
+tbody tr{border-bottom:1px solid var(--line)}
+tbody tr:last-child{border-bottom:none}
+td.y{font-weight:700}
+
+.notes{padding:24px}
+.notes h4{font-family:var(--fm);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  margin:18px 0 8px;color:var(--hard)}
+.notes h4:first-child{margin-top:0}
+.notes p,.notes li{font-size:13.5px;color:var(--ink2);margin:0 0 8px}
+.notes ul{margin:0 0 8px;padding-left:19px}
+.callout{padding:15px 17px;background:var(--hi);border:2px solid var(--hard);margin:14px 0;font-size:13.5px}
+#msg{display:none;margin-top:16px;padding:12px 14px;background:#FBD5CF;border:2px solid var(--hard);font-size:13px}
+.loading{display:inline-block;font-family:var(--fm);font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;background:var(--hard);color:var(--hi);padding:3px 9px}
+footer{padding:30px 0 60px;text-align:center}
+footer .rule{height:8px;background:var(--hi);border:2px solid var(--hard);margin-bottom:16px}
+footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
+
+@media (max-width:620px){
+  .wrap{padding:0 14px}
+  header{padding:22px 0 4px}
+  .masthead{padding:20px 17px;box-shadow:6px 6px 0 var(--hard)}
+  .form{padding:16px;grid-template-columns:1fr;gap:13px}
+  .field input,.field select{min-height:46px}
+  .chip{min-height:44px}
+  .chartbox{height:290px;padding:8px 0 0}
+  .results{grid-template-columns:1fr 1fr;gap:10px}
+  .rcard{padding:13px}
+  .tablewrap{overflow-x:auto}
+  section{padding:20px 0}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="eyebrow">NSE · BSE · India</div>
+      <h1>Investment<br>Calculator</h1>
+      <p class="sub">Put in an amount and find out what it would actually have become — on the real
+      price history of any Indian stock or index, or at a rate of return you choose yourself.</p>
+      <a class="backlink" href="index.html">← Back to the historical analysis</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="seg" id="modeSeg">
+      <button class="chip on" data-mode="real">Use real market history</button>
+      <button class="chip" data-mode="assume">Use a return I choose</button>
+    </div>
+
+    <!-- ------------------------------------------------ real history -->
+    <div id="paneReal">
+      <div class="shead">
+        <span class="snum">01</span><h2>What it would have become</h2>
+        <p>Every rupee is put to work at the instrument's actual closing price on the day, and valued
+        at its actual closing price at the end. No dividends, taxes, brokerage or inflation.</p>
+      </div>
+      <div class="neu form">
+        <div class="field pbox">
+          <label for="rSym">Stock or index</label>
+          <input id="rSym" type="search" autocomplete="off" spellcheck="false" value="NIFTY 50">
+          <div id="rResults" class="presults" hidden></div>
+          <span class="note" id="rSymNote">^NSEI · loading…</span>
+        </div>
+        <div class="field">
+          <label for="rHow">How you invest</label>
+          <select id="rHow">
+            <option value="both">Compare both</option>
+            <option value="lump">Once, at the start (lumpsum)</option>
+            <option value="sip">Every month (SIP)</option>
+          </select>
+          <span class="note">SIP buys on the first trading day of each month.</span>
+        </div>
+        <div class="field">
+          <label for="rAmt">Amount in ₹</label>
+          <input id="rAmt" type="number" min="1" step="500" value="10000">
+          <span class="note" id="rAmtNote">Per month for SIP; once for lumpsum.</span>
+        </div>
+        <div class="field">
+          <label for="rFrom">From</label>
+          <input id="rFrom" type="date">
+        </div>
+        <div class="field">
+          <label for="rTo">To</label>
+          <input id="rTo" type="date">
+          <span class="note">Leave at the latest date to run up to today.</span>
+        </div>
+      </div>
+      <div id="msg"></div>
+      <div class="results" id="rResultsBox"></div>
+      <div class="neu chartbox"><canvas id="rChart"></canvas></div>
+      <p class="mono" id="rChartCap" style="font-size:11px;color:#7C8291;margin:10px 2px 0"></p>
+      <p class="mono" id="rTableCap" style="font-size:11px;color:#7C8291;margin:18px 2px 0"></p>
+      <div class="neu tablewrap">
+        <table id="rTable">
+          <thead><tr><th>Year</th><th>Invested by year end</th><th>Value at year end</th>
+            <th>Gain</th><th>Return on invested</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------ assumed return -->
+    <div id="paneAssume" hidden>
+      <div class="shead">
+        <span class="snum">01</span><h2>What it could become</h2>
+        <p>A projection at a rate you pick. This is arithmetic, not a forecast — no investment
+        actually returns the same percentage every year, and the real history above shows how
+        uneven it really is.</p>
+      </div>
+      <div class="neu form">
+        <div class="field">
+          <label for="aHow">How you invest</label>
+          <select id="aHow">
+            <option value="both">Compare both</option>
+            <option value="lump">Once, at the start (lumpsum)</option>
+            <option value="sip">Every month (SIP)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="aAmt">Amount in ₹</label>
+          <input id="aAmt" type="number" min="1" step="500" value="10000">
+          <span class="note">Per month for SIP; once for lumpsum.</span>
+        </div>
+        <div class="field">
+          <label for="aRate">Annual return %</label>
+          <input id="aRate" type="number" min="-99" max="200" step="0.5" value="12">
+          <span class="note">Nominal, compounded monthly — the usual convention.</span>
+        </div>
+        <div class="field">
+          <label for="aYears">For how many years</label>
+          <input id="aYears" type="number" min="1" max="60" step="1" value="10">
+        </div>
+      </div>
+      <div class="results" id="aResultsBox"></div>
+      <div class="neu chartbox"><canvas id="aChart"></canvas></div>
+      <div class="neu tablewrap">
+        <table id="aTable">
+          <thead><tr><th>Year</th><th>Invested by year end</th><th>Value at year end</th>
+            <th>Gain</th><th>Return on invested</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="snum">02</span><h2>How this is worked out</h2></div>
+    <div class="neu notes">
+      <div class="callout">
+        <b>This is a price-return calculation.</b> It follows the share or index price only. It leaves
+        out dividends, taxes, brokerage, stamp duty and inflation — so a real portfolio would have done
+        somewhat better on dividends and somewhat worse on costs and tax. Nothing here is investment
+        advice or a prediction.
+      </div>
+      <h4>Real-history mode</h4>
+      <ul>
+        <li><b>Lumpsum</b> buys at the closing price on the first trading day on or after your start
+        date, and is valued at the closing price on the last trading day on or before your end date.</li>
+        <li><b>SIP</b> buys on the <b>first trading day of each month</b> in the range, at that day's
+        close, accumulating fractional units. The instalment count is shown with the result.</li>
+        <li><b>CAGR</b> is the constant annual rate that turns the amount invested into the final value
+        over the elapsed period. For a SIP that figure would be misleading, because each instalment is
+        invested for a different length of time, so <b>XIRR</b> is used instead — the rate that makes
+        every dated cash flow balance.</li>
+        <li>Prices are split-adjusted, so a share split does not distort the result.</li>
+      </ul>
+      <h4>Chosen-return mode</h4>
+      <ul>
+        <li><b>Lumpsum:</b> <code>Value = P × (1 + r/12)<sup>12n</sup></code></li>
+        <li><b>SIP:</b> <code>Value = P × [((1 + i)<sup>m</sup> − 1) ÷ i] × (1 + i)</code>, with
+        <code>i = r/12</code> and <code>m</code> months — the same convention Indian SIP calculators
+        use, so the numbers line up with what you see elsewhere.</li>
+        <li>A steady rate is an assumption for arithmetic, not a claim about the future.</li>
+      </ul>
+      <h4>Where the prices come from</h4>
+      <p>The same source as the main analysis: NSE's official end-of-day records reconciled against a
+      bulk market feed. The <a href="index.html">historical analysis page</a> sets out the sources,
+      the verification and the limits in full.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="rule"></div>
+    <div class="mono" id="foot">Price-return only · not investment advice</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+"use strict";
+window.LIVE_ORIGIN="https://stock-learn.vercel.app";
+function api(p){return (location.protocol==="file:"&&window.LIVE_ORIGIN)?window.LIVE_ORIGIN+p:p;}
+
+const NF=new Intl.NumberFormat("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const NF0=new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const rupee=v=>"₹"+NF0.format(Math.round(v));
+const pct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+const cls=v=>v>=0?"pos":"neg";
+function fmtDate(iso){const p=iso.split("-");return p[2]+" "+MON[+p[1]-1]+" "+p[0];}
+/** Big rupee amounts read better in lakh/crore for an Indian audience. */
+function big(v){
+  const a=Math.abs(v);
+  if(a>=1e7)return "₹"+(v/1e7).toFixed(2)+" cr";
+  if(a>=1e5)return "₹"+(v/1e5).toFixed(2)+" L";
+  return rupee(v);
+}
+const CH={};
+
+function decodeSeries(raw){
+  const D=raw.d.split(","),Cc=raw.c.split(","),Oo=raw.o.split(","),
+        Hh=raw.h.split(","),Ll=raw.l.split(",");
+  const base=Date.UTC(+raw.base.slice(0,4),+raw.base.slice(5,7)-1,+raw.base.slice(8,10));
+  const out=[];let day=0,c=0;
+  for(let i=0;i<raw.n;i++){
+    day+=parseInt(D[i],36); c+=parseInt(Cc[i],36);
+    const u=new Date(base+day*86400000);
+    const y=u.getUTCFullYear(),mo=u.getUTCMonth(),da=u.getUTCDate();
+    out.push({y:y,m:mo,iso:y+"-"+String(mo+1).padStart(2,"0")+"-"+String(da).padStart(2,"0"),
+      t:new Date(y,mo,da).getTime(),c:c/100});
+  }
+  return out;
+}
+
+/* XIRR — the rate that makes a set of dated cash flows balance. Bisection rather than
+   Newton so it cannot diverge on awkward inputs. */
+function xirr(flows){
+  if(flows.length<2)return null;
+  const t0=flows[0].t;
+  const npv=r=>flows.reduce((s,f)=>s+f.amt/Math.pow(1+r,(f.t-t0)/(365.25*86400000)),0);
+  let lo=-0.9999,hi=10;
+  if(npv(lo)*npv(hi)>0)return null;
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    if(npv(lo)*npv(mid)<=0)hi=mid;else lo=mid;
+  }
+  const r=(lo+hi)/2;
+  return isFinite(r)?r*100:null;
+}
+
+/* ------------------------------------------------------------ real history */
+const RS={symbol:"^NSEI",name:"NIFTY 50",rows:[]};
+
+function firstTradingDayIndices(rows){
+  const out=[];let key="";
+  for(let i=0;i<rows.length;i++){
+    const k=rows[i].y+"-"+rows[i].m;
+    if(k!==key){key=k;out.push(i);}
+  }
+  return out;
+}
+
+function runReal(){
+  const box=document.getElementById("rResultsBox");
+  const msg=document.getElementById("msg");
+  msg.style.display="none";
+  if(!RS.rows.length){box.innerHTML="";return;}
+
+  const amt=Math.max(1,+document.getElementById("rAmt").value||0);
+  const how=document.getElementById("rHow").value;
+  let a=document.getElementById("rFrom").value||RS.rows[0].iso;
+  let b=document.getElementById("rTo").value||RS.rows[RS.rows.length-1].iso;
+  if(a>b){const t=a;a=b;b=t;}
+  const notes=[];
+  if(a<RS.rows[0].iso){notes.push("History for "+RS.symbol+" starts "+fmtDate(RS.rows[0].iso)+".");a=RS.rows[0].iso;}
+  const seg=RS.rows.filter(r=>r.iso>=a&&r.iso<=b);
+  if(seg.length<2){
+    box.innerHTML="";
+    msg.style.display="block";
+    msg.innerHTML="<b>Not enough history in that range.</b> Pick a wider window.";
+    return;
+  }
+
+  const last=seg[seg.length-1];
+  const results=[];
+
+  if(how==="lump"||how==="both"){
+    const units=amt/seg[0].c, value=units*last.c;
+    const days=(last.t-seg[0].t)/86400000;
+    const cagr=days>60?(Math.pow(value/amt,365.25/days)-1)*100:null;
+    results.push({kind:"Lumpsum",invested:amt,value,cagr,
+      note:"bought "+fmtDate(seg[0].iso)+" at "+NF.format(seg[0].c),
+      series:seg.map(r=>({t:r.t,inv:amt,val:units*r.c}))});
+  }
+
+  if(how==="sip"||how==="both"){
+    const buys=firstTradingDayIndices(seg);
+    let units=0,invested=0;
+    const flows=[],pts=[];
+    let bi=0;
+    for(let i=0;i<seg.length;i++){
+      if(bi<buys.length&&buys[bi]===i){
+        units+=amt/seg[i].c; invested+=amt;
+        flows.push({t:seg[i].t,amt:-amt});
+        bi++;
+      }
+      pts.push({t:seg[i].t,inv:invested,val:units*seg[i].c});
+    }
+    const value=units*last.c;
+    flows.push({t:last.t,amt:value});
+    results.push({kind:"SIP",invested,value,cagr:xirr(flows),cagrLabel:"XIRR",
+      note:buys.length+" monthly instalments of "+rupee(amt),series:pts});
+  }
+
+  box.innerHTML=results.map((r,i)=>{
+    const gain=r.value-r.invested, ret=(r.value/r.invested-1)*100;
+    return '<div class="rcard '+(i===0?"accent":"neu")+'">'
+      +'<div class="k">'+r.kind+' → final value</div>'
+      +'<div class="v">'+big(r.value)+'</div>'
+      +'<div class="s">'+big(r.invested)+' invested · '+(gain>=0?"+":"−")+big(Math.abs(gain)).slice(1)
+      +' gain · '+pct(ret)+'</div>'
+      +'<div class="s">'+(r.cagr!=null?(r.cagrLabel||"CAGR")+" "+pct(r.cagr)+" · ":"")+r.note+'</div>'
+      +'</div>';
+  }).join("");
+
+  if(notes.length){msg.style.display="block";msg.textContent=notes.join(" ");}
+
+  drawGrowth("rChart",results,seg);
+  const shown=results[results.length-1];
+  const cap=document.getElementById("rTableCap");
+  if(cap)cap.textContent="Year-end position for the "+shown.kind+" plan.";
+  yearTable("rTable",shown,seg);
+}
+
+function drawGrowth(id,results,seg){
+  if(typeof Chart==="undefined")return;
+  if(CH[id]){CH[id].destroy();delete CH[id];}
+  const ds=[];
+  const cols=["#2C2CE0","#00919E"];
+  /* A one-off ₹10,000 and 121 × ₹10,000 differ by two orders of magnitude, so drawing both
+     in rupees on one axis flattens the lumpsum to the floor. Two y-axes would only make that
+     harder to read honestly, so when both are shown the chart switches to growth per rupee
+     invested — which is the thing that is actually comparable. */
+  const multi=results.length>1;
+  results.forEach((r,i)=>{
+    ds.push({label:multi?r.kind:r.kind+" value",
+      data:r.series.map(p=>({x:p.t,y:multi?(p.inv?p.val/p.inv:1):p.val})),
+      borderColor:cols[i%2],borderWidth:2,pointRadius:0,tension:0,fill:false});
+    if(!multi)ds.push({label:r.kind+" invested",data:r.series.map(p=>({x:p.t,y:p.inv})),
+      borderColor:cols[i%2],borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,fill:false});
+  });
+  const fmtY=v=>multi?(v.toFixed(2)+"×"):big(v);
+  const cap=document.getElementById("rChartCap");
+  if(cap)cap.textContent=multi
+    ? "Growth per rupee invested — 1.00× means you are level; both lines are directly comparable."
+    : "Solid line is what the holding is worth; dashed is what you have put in.";
+  const yrs=seg?(seg[seg.length-1].t-seg[0].t)/31557600000:10;
+  CH[id]=new Chart(document.getElementById(id).getContext("2d"),{
+    type:"line",data:{datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      interaction:{mode:"index",intersect:false},
+      scales:{
+        x:{type:"time",time:{unit:yrs>6?"year":yrs>1.2?"month":"day",tooltipFormat:"dd MMM yyyy",
+             displayFormats:{day:"dd MMM",month:"MMM yy",year:"yyyy"}},
+           grid:{display:false},border:{color:"#C7CBD5"},
+           ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:9,font:{size:10},color:"#7C8291"}},
+        y:{grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+           ticks:{callback:fmtY,font:{size:10},color:"#7C8291",maxTicksLimit:7}}
+      },
+      plugins:{
+        legend:{display:true,position:"top",align:"start",
+          labels:{boxWidth:10,boxHeight:10,font:{size:11,weight:"700"},color:"#4A4F5C",padding:12}},
+        tooltip:{backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+          cornerRadius:0,padding:10,
+          callbacks:{label:c=>c.dataset.label+"  "+fmtY(c.parsed.y)}}
+      }}
+  });
+}
+
+function yearTable(id,r,seg){
+  const tb=document.querySelector("#"+id+" tbody");
+  if(!r){tb.innerHTML="";return;}
+  const byYear={};
+  r.series.forEach(p=>{const y=new Date(p.t).getFullYear();byYear[y]=p;});
+  tb.innerHTML=Object.keys(byYear).map(y=>{
+    const p=byYear[y],gain=p.val-p.inv,ret=p.inv?(p.val/p.inv-1)*100:0;
+    return '<tr><td class="y">'+y+'</td><td>'+big(p.inv)+'</td><td><b>'+big(p.val)+'</b></td>'
+      +'<td class="'+cls(gain)+'">'+(gain>=0?"+":"−")+big(Math.abs(gain)).slice(1)+'</td>'
+      +'<td class="'+cls(ret)+'">'+pct(ret)+'</td></tr>';
+  }).join("");
+}
+
+async function loadReal(sym){
+  const note=document.getElementById("rSymNote");
+  note.innerHTML='<span class="loading">Loading '+sym+'…</span>';
+  try{
+    const r=await fetch(api("/api/quote")+"?symbol="+encodeURIComponent(sym),{cache:"no-store"});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||r.status);
+    RS.symbol=j.symbol;RS.name=j.name;RS.rows=decodeSeries(j.series);
+    document.getElementById("rSym").value=j.name;
+    note.textContent=j.symbol+" · "+RS.rows.length.toLocaleString("en-IN")+" sessions · "
+      +fmtDate(RS.rows[0].iso)+" → "+fmtDate(RS.rows[RS.rows.length-1].iso);
+    const f=document.getElementById("rFrom"),t=document.getElementById("rTo");
+    f.min=t.min=RS.rows[0].iso; f.max=t.max=RS.rows[RS.rows.length-1].iso;
+    t.value=RS.rows[RS.rows.length-1].iso;
+    const back=new Date(RS.rows[RS.rows.length-1].t);
+    back.setFullYear(back.getFullYear()-10);
+    const want=back.toISOString().slice(0,10);
+    f.value=want<RS.rows[0].iso?RS.rows[0].iso:want;
+    runReal();
+  }catch(e){
+    note.textContent="Could not load "+sym+" — "+(e.message||e);
+  }
+}
+
+/* symbol search for the calculator */
+(function(){
+  const box=document.getElementById("rSym"),list=document.getElementById("rResults");
+  let t=0,seq=0;
+  box.addEventListener("input",()=>{
+    const q=box.value.trim();
+    clearTimeout(t);
+    if(!q){list.hidden=true;return;}
+    t=setTimeout(async()=>{
+      const my=++seq;
+      try{
+        const r=await fetch(api("/api/search")+"?q="+encodeURIComponent(q),{cache:"no-store"});
+        const j=await r.json();
+        if(my!==seq)return;
+        const res=j.results||[];
+        list.innerHTML=res.length
+          ? res.map(x=>'<button data-pick="'+x.symbol+'"><span class="sym">'+x.symbol
+              +'</span><span class="nm">'+x.name+'</span><span class="ex">'+x.exchange+'</span></button>').join("")
+          : '<div class="empty">Nothing matched.</div>';
+        list.hidden=false;
+      }catch(e){list.hidden=true;}
+    },180);
+  });
+  document.addEventListener("click",e=>{
+    if(!e.target.closest(".pbox"))list.hidden=true;
+    const p=e.target.closest("[data-pick]");
+    if(p){list.hidden=true;loadReal(p.dataset.pick);}
+  });
+})();
+
+["rAmt","rHow","rFrom","rTo"].forEach(id=>
+  document.getElementById(id).addEventListener("input",runReal));
+
+/* ------------------------------------------------------------ assumed return */
+function runAssume(){
+  const P=Math.max(1,+document.getElementById("aAmt").value||0);
+  const r=(+document.getElementById("aRate").value||0)/100;
+  const n=Math.max(1,Math.min(60,+document.getElementById("aYears").value||1));
+  const how=document.getElementById("aHow").value;
+  const i=r/12, m=n*12;
+  const results=[];
+
+  if(how==="lump"||how==="both"){
+    const pts=[];
+    for(let k=0;k<=m;k++)pts.push({t:k,inv:P,val:P*Math.pow(1+i,k)});
+    results.push({kind:"Lumpsum",invested:P,value:P*Math.pow(1+i,m),series:pts});
+  }
+  if(how==="sip"||how==="both"){
+    const pts=[];
+    for(let k=0;k<=m;k++){
+      const v=i===0?P*k:P*((Math.pow(1+i,k)-1)/i)*(1+i);
+      pts.push({t:k,inv:P*k,val:v});
+    }
+    results.push({kind:"SIP",invested:P*m,
+      value:i===0?P*m:P*((Math.pow(1+i,m)-1)/i)*(1+i),series:pts});
+  }
+
+  document.getElementById("aResultsBox").innerHTML=results.map((x,idx)=>{
+    const gain=x.value-x.invested,ret=(x.value/x.invested-1)*100;
+    return '<div class="rcard '+(idx===0?"accent":"neu")+'">'
+      +'<div class="k">'+x.kind+' → after '+n+' year'+(n>1?"s":"")+'</div>'
+      +'<div class="v">'+big(x.value)+'</div>'
+      +'<div class="s">'+big(x.invested)+' invested · '+(gain>=0?"+":"−")+big(Math.abs(gain)).slice(1)
+      +' gain · '+pct(ret)+'</div>'
+      +'<div class="s">at '+(r*100).toFixed(1)+'% a year'+(x.kind==="SIP"?", "+m+" instalments":"")+'</div>'
+      +'</div>';
+  }).join("");
+
+  if(typeof Chart!=="undefined"){
+    if(CH.aChart){CH.aChart.destroy();delete CH.aChart;}
+    const cols=["#2C2CE0","#00919E"],ds=[];
+    results.forEach((x,idx)=>{
+      ds.push({label:x.kind+" value",data:x.series.map(p=>({x:p.t/12,y:p.val})),
+        borderColor:cols[idx%2],borderWidth:2,pointRadius:0,tension:0,fill:false});
+      ds.push({label:x.kind+" invested",data:x.series.map(p=>({x:p.t/12,y:p.inv})),
+        borderColor:cols[idx%2],borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,fill:false});
+    });
+    CH.aChart=new Chart(document.getElementById("aChart").getContext("2d"),{
+      type:"line",data:{datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,
+        interaction:{mode:"index",intersect:false},
+        scales:{
+          x:{type:"linear",title:{display:true,text:"Years",color:"#7C8291",font:{size:10}},
+             grid:{display:false},border:{color:"#C7CBD5"},
+             ticks:{font:{size:10},color:"#7C8291",maxTicksLimit:11,callback:v=>v}},
+          y:{grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+             ticks:{callback:v=>big(v),font:{size:10},color:"#7C8291",maxTicksLimit:7}}
+        },
+        plugins:{
+          legend:{display:true,position:"top",align:"start",
+            labels:{boxWidth:10,boxHeight:10,font:{size:11,weight:"700"},color:"#4A4F5C",padding:12}},
+          tooltip:{backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+            cornerRadius:0,padding:10,
+            callbacks:{title:it=>"Year "+(+it[0].parsed.x).toFixed(1),
+                       label:c=>c.dataset.label+"  "+big(c.parsed.y)}}
+        }}
+    });
+  }
+
+  const x=results[results.length-1],tb=document.querySelector("#aTable tbody");
+  let h="";
+  for(let y=1;y<=n;y++){
+    const p=x.series[y*12];
+    const gain=p.val-p.inv,ret=p.inv?(p.val/p.inv-1)*100:0;
+    h+='<tr><td class="y">'+y+'</td><td>'+big(p.inv)+'</td><td><b>'+big(p.val)+'</b></td>'
+      +'<td class="'+cls(gain)+'">'+(gain>=0?"+":"−")+big(Math.abs(gain)).slice(1)+'</td>'
+      +'<td class="'+cls(ret)+'">'+pct(ret)+'</td></tr>';
+  }
+  tb.innerHTML=h;
+}
+["aAmt","aRate","aYears","aHow"].forEach(id=>
+  document.getElementById(id).addEventListener("input",runAssume));
+
+/* ------------------------------------------------------------ mode switch */
+document.getElementById("modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("[data-mode]");
+  if(!b)return;
+  document.querySelectorAll("#modeSeg .chip").forEach(c=>c.classList.toggle("on",c===b));
+  const real=b.dataset.mode==="real";
+  document.getElementById("paneReal").hidden=!real;
+  document.getElementById("paneAssume").hidden=real;
+  if(real)runReal();else runAssume();
+});
+
+/* a ?symbol= or #symbol= link opens the calculator straight onto that instrument */
+const m=/[?#&]symbol=([^&]+)/.exec(location.search+location.hash);
+loadReal(m?decodeURIComponent(m[1]).toUpperCase():"^NSEI");
+runAssume();
+</script>
+</body>
+</html>

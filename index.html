@@ -75,6 +75,12 @@ h1 .arrow{font-family:var(--fm);font-weight:400}
   padding:5px 10px;border:2px solid var(--hard);background:var(--surface);color:var(--hard)
 }
 .tag.live{background:var(--posf);color:#062}
+.calclink{
+  display:inline-block;margin-top:16px;font-family:var(--fm);font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;padding:9px 13px;text-decoration:none;
+  background:var(--hard);color:var(--hi);border:2px solid var(--hard);box-shadow:4px 4px 0 var(--surface)
+}
+.calclink:hover{background:var(--surface);color:var(--hard);box-shadow:4px 4px 0 var(--hard)}
 .tag.stale{background:var(--sd)}
 
 /* ============================================================ sections */
@@ -286,6 +292,23 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   border:2px solid var(--hard);font-size:13px
 }
 
+/* ============================================================ compare */
+.cmpchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cmpchip{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:12px;
+  font-weight:700;padding:7px 9px;background:var(--surface);border:2px solid var(--hard)
+}
+.cmpchip .sw{width:12px;height:12px;flex:0 0 auto;border:1px solid rgba(0,0,0,.35)}
+.cmpchip .x{
+  cursor:pointer;font-family:var(--fm);font-weight:700;color:var(--ink3);
+  padding:0 2px;background:none;border:none;font-size:14px;line-height:1
+}
+.cmpchip .x:hover{color:var(--neg)}
+.cmpchip.busy{opacity:.55}
+.cmphint{font-family:var(--fm);font-size:11.5px;color:var(--ink3);margin-bottom:16px}
+#cmpTable td.name{display:flex;align-items:center;gap:8px;text-align:left}
+#cmpTable td.name .sw{width:11px;height:11px;flex:0 0 auto;border:1px solid rgba(0,0,0,.35)}
+
 /* ============================================================ corporate actions */
 .calist{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(232px,1fr))}
 .caitem{
@@ -302,7 +325,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 #mnav{display:none}
 @media (max-width:720px){
   #mnav{
-    display:grid;grid-template-columns:repeat(5,1fr);position:fixed;
+    display:grid;grid-template-columns:repeat(6,1fr);position:fixed;
     left:0;right:0;bottom:0;z-index:60;background:var(--hi);
     border-top:2px solid var(--hard);
     padding-bottom:env(safe-area-inset-bottom,0)
@@ -402,6 +425,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
       time. Every point is a real daily close from the exchange record — nothing smoothed, averaged
       or estimated.</p>
       <div class="tagrow" id="tagrow"></div>
+      <a class="calclink" href="calculator.html">Open the investment calculator &rarr;</a>
     </div>
 
     <div class="picker neu">
@@ -524,13 +548,58 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   </div>
 </section>
 
+<section id="compare">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">06</span><h2>Compare</h2>
+      <p>Up to four instruments on one chart. Everything is rebased to 100 at the start of the window,
+      so a ₹200 share and a 24,000-point index become directly comparable — the line that ends highest
+      grew the most, whatever it costs.</p>
+    </div>
+    <div class="controls">
+      <div class="pbox" style="flex:1 1 260px;min-width:0">
+        <input id="cmpSearch" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Add an instrument to compare…" aria-label="Add an instrument to compare">
+        <div id="cmpResults" class="presults" hidden></div>
+      </div>
+      <div class="seg" id="cmpPresets">
+        <button class="chip" data-cp="1y">1Y</button>
+        <button class="chip" data-cp="3y">3Y</button>
+        <button class="chip on" data-cp="5y">5Y</button>
+        <button class="chip" data-cp="10y">10Y</button>
+        <button class="chip" data-cp="max">MAX</button>
+      </div>
+    </div>
+    <div class="cmpchips" id="cmpChips"></div>
+    <div class="neu yblock">
+      <div class="neu-in chartbox"><canvas id="cmpChart"></canvas></div>
+      <div class="chartfoot">
+        <span class="hint"><span class="d-only">Rebased to 100 · drag to zoom · shift-drag to pan</span><span class="m-only">Rebased to 100 · pinch to zoom</span></span>
+        <button class="btn-reset" data-reset="cmpChart">Reset zoom</button>
+      </div>
+      <div class="tablewrap" style="margin-top:16px">
+        <table id="cmpTable">
+          <thead><tr>
+            <th>Instrument</th><th>Start</th><th>End</th><th>Return %</th>
+            <th>CAGR</th><th>Best day</th><th>Worst day</th><th>Max drawdown</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="sim">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">06</span><h2>If I invested ₹10,000 at the start of each year</h2>
+      <span class="snum">07</span><h2>If I invested ₹10,000 at the start of each year</h2>
       <p>A <b>simple price-return simulation</b>. Each year stands alone — ₹10,000 goes in on the first
       trading day and comes out on the last. No dividends, no taxes, no brokerage, no inflation, and
       nothing is carried from one year into the next.</p>
+      <p>Want your own numbers instead of a fixed ₹10,000 a year?
+      <a href="calculator.html">The calculator</a> runs a lumpsum or a monthly SIP of any amount over
+      any period, on this instrument's real history or at a rate of return you choose.</p>
     </div>
     <div class="neu tablewrap">
       <table id="simTable">
@@ -546,7 +615,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <section id="moves">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">07</span><h2>The biggest single days</h2>
+      <span class="snum">08</span><h2>The biggest single days</h2>
       <p>Detected straight from the data — every session that moved more than
       <b id="movesCaption">2.5</b>% either way, ranked. That threshold is derived from this
       instrument's own typical daily move, so it adapts to a calm index or a volatile stock.
@@ -565,7 +634,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <section id="actions">
   <div class="wrap">
     <div class="shead">
-      <span class="snum">08</span><h2>Corporate actions</h2>
+      <span class="snum">09</span><h2>Corporate actions</h2>
       <p>Splits and dividends reported by the exchange feed for this instrument. Nothing here is
       written by hand — each company carries its own record, so it is empty for an index.</p>
     </div>
@@ -575,7 +644,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 
 <section id="notes">
   <div class="wrap">
-    <div class="shead"><span class="snum">09</span><h2>Source &amp; method</h2></div>
+    <div class="shead"><span class="snum">10</span><h2>Source &amp; method</h2></div>
     <div class="neu notes">
       <h4>Data source</h4>
       <p>Daily open / high / low / close for the NIFTY 50 price index, built from two sources and
@@ -672,6 +741,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   <button data-go="summary"><span class="ic" aria-hidden="true">▦</span>Years</button>
   <button data-go="years"><span class="ic" aria-hidden="true">▲</span>Charts</button>
   <button data-go="range"><span class="ic" aria-hidden="true">◧</span>Range</button>
+  <button data-go="compare"><span class="ic" aria-hidden="true">◫</span>Compare</button>
   <button data-go="sim"><span class="ic" aria-hidden="true">₹</span>10k</button>
 </nav>
 
@@ -1380,6 +1450,203 @@ function rebuildYears(){
   }
 }
 
+/* ================================================================= compare */
+/* Categorical hues in fixed order — a series keeps its colour when others are removed.
+   Validated for colour-vision separation against this page's surface. */
+const CMP_COLORS=["#2C2CE0","#C0392B","#00919E","#A8620A"];
+const CMP={items:[],span:"5y",chart:null};
+
+function cmpColorFor(i){return CMP_COLORS[i%CMP_COLORS.length];}
+
+function cmpWindowStart(){
+  if(!CMP.items.length)return null;
+  /* every series must exist across the whole window, else a latecomer would appear
+     to start at 100 halfway along and look like it beat everything */
+  let latestFirst=CMP.items[0].rows[0].t;
+  CMP.items.forEach(it=>{latestFirst=Math.max(latestFirst,it.rows[0].t);});
+  let earliestLast=CMP.items[0].rows[CMP.items[0].rows.length-1].t;
+  CMP.items.forEach(it=>{earliestLast=Math.min(earliestLast,it.rows[it.rows.length-1].t);});
+  const end=new Date(earliestLast);
+  let start=new Date(earliestLast);
+  const y={"1y":1,"3y":3,"5y":5,"10y":10}[CMP.span];
+  if(y)start.setFullYear(start.getFullYear()-y);else start=new Date(latestFirst);
+  return{from:Math.max(start.getTime(),latestFirst),to:end.getTime()};
+}
+
+function renderCompareChips(){
+  document.getElementById("cmpChips").innerHTML=CMP.items.map((it,i)=>
+    '<span class="cmpchip'+(it.loading?" busy":"")+'"><span class="sw" style="background:'+cmpColorFor(i)+'"></span>'
+    +it.symbol+(it.loading?' <span style="font-weight:400">loading…</span>':'')
+    +'<button class="x" data-cmpdel="'+it.symbol+'" aria-label="Remove '+it.symbol+'">×</button></span>'
+  ).join("")
+  +(CMP.items.length<4?'':'<span class="cmphint" style="margin:0;align-self:center">Four is the limit — remove one to add another.</span>');
+}
+
+function renderCompare(){
+  renderCompareChips();
+  const tb=document.querySelector("#cmpTable tbody");
+  const ready=CMP.items.filter(it=>!it.loading&&it.rows&&it.rows.length>1);
+  if(!ready.length){
+    if(CMP.chart){CMP.chart.destroy();CMP.chart=null;}
+    tb.innerHTML='<tr><td colspan="8" style="text-align:left;color:#7C8291">'
+      +'Add an instrument above to start comparing.</td></tr>';
+    return;
+  }
+  const saved=CMP.items;CMP.items=ready;
+  const win=cmpWindowStart();
+  CMP.items=saved;
+  if(!win||win.from>=win.to){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:left;color:#7C8291">'
+      +'These instruments have no overlapping history to compare.</td></tr>';
+    return;
+  }
+
+  const datasets=[],rowsOut=[];
+  ready.forEach(it=>{
+    const i=CMP.items.indexOf(it),col=cmpColorFor(i);
+    const seg=it.rows.filter(r=>r.t>=win.from&&r.t<=win.to);
+    if(seg.length<2)return;
+    const base=seg[0].c;
+    datasets.push({
+      label:it.symbol,
+      data:seg.map(r=>({x:r.t,y:r.c/base*100})),
+      borderColor:col,borderWidth:2,pointRadius:0,pointHoverRadius:5,
+      pointHoverBackgroundColor:col,pointHoverBorderColor:"#E9EBF0",pointHoverBorderWidth:2,
+      tension:0,fill:false
+    });
+    /* per-series stats over exactly the compared window */
+    let hi=seg[0],lo=seg[0],best=null,worst=null,peak=-Infinity,mdd=0;
+    for(let k=0;k<seg.length;k++){
+      const r=seg[k];
+      if(r.c>hi.c)hi=r; if(r.c<lo.c)lo=r;
+      if(k){
+        const ch=(r.c-seg[k-1].c)/seg[k-1].c*100;
+        if(!best||ch>best.v)best={v:ch,iso:r.iso};
+        if(!worst||ch<worst.v)worst={v:ch,iso:r.iso};
+      }
+      if(r.c>peak)peak=r.c;
+      const dd=(r.c-peak)/peak*100;
+      if(dd<mdd)mdd=dd;
+    }
+    const days=(seg[seg.length-1].t-seg[0].t)/86400000;
+    const ret=(seg[seg.length-1].c-base)/base*100;
+    rowsOut.push({it,col,seg,ret,best,worst,mdd,
+      cagr:days>400?(Math.pow(seg[seg.length-1].c/base,365.25/days)-1)*100:null});
+  });
+
+  if(CMP.chart){CMP.chart.destroy();CMP.chart=null;}
+  if(READY&&datasets.length){
+    const yrs=(win.to-win.from)/31557600000;
+    CMP.chart=new Chart(document.getElementById("cmpChart").getContext("2d"),{
+      type:"line",data:{datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,
+        interaction:{mode:"index",intersect:false},
+        scales:{
+          x:{type:"time",time:{unit:yrs>6?"year":yrs>1.2?"month":"day",tooltipFormat:"dd MMM yyyy",
+               displayFormats:{day:"dd MMM",month:"MMM yy",year:"yyyy"}},
+             grid:{display:false},border:{color:"#C7CBD5"},
+             ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:10,font:{size:10},color:"#7C8291"}},
+          y:{grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+             ticks:{callback:v=>NF0.format(v),font:{size:10},color:"#7C8291",maxTicksLimit:7}}
+        },
+        plugins:{
+          legend:{display:true,position:"top",align:"start",
+            labels:{boxWidth:10,boxHeight:10,usePointStyle:false,
+              font:{size:11,weight:"700"},color:"#4A4F5C",padding:14}},
+          annotation:{annotations:{hundred:{type:"line",yMin:100,yMax:100,
+            borderColor:"rgba(16,16,20,.45)",borderWidth:1.5,borderDash:[4,4],
+            label:{display:true,content:"100 = start",position:"start",
+              backgroundColor:"rgba(16,16,20,.85)",color:"#E9EBF0",
+              font:{size:9,weight:"700"},padding:{x:5,y:3},borderRadius:0,yAdjust:-10}}}},
+          tooltip:{
+            backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+            borderColor:"#101014",borderWidth:2,cornerRadius:0,padding:11,
+            titleFont:{size:11.5,weight:"700"},bodyFont:{size:11.5},
+            callbacks:{
+              title:it=>fmtDateLong(new Date(it[0].parsed.x).toISOString().slice(0,10)),
+              label:c=>c.dataset.label+"  "+c.parsed.y.toFixed(1)+"  ("+pct(c.parsed.y-100)+")"
+            }
+          },
+          zoom:{limits:{x:{min:"original",max:"original"}},
+            pan:{enabled:true,mode:"x",modifierKey:"shift"},
+            zoom:{wheel:{enabled:true,speed:.08},pinch:{enabled:true},
+              drag:{enabled:true,backgroundColor:"rgba(44,44,224,.13)",
+                    borderColor:"#2C2CE0",borderWidth:1},mode:"x"}}
+        }
+      }
+    });
+  }
+
+  rowsOut.sort((a,b)=>b.ret-a.ret);
+  tb.innerHTML=rowsOut.map(r=>
+    '<tr><td class="name"><span class="sw" style="background:'+r.col+'"></span>'
+    +'<b>'+r.it.symbol+'</b></td>'
+    +'<td data-l="Start">'+fmtDate(r.seg[0].iso)+'</td>'
+    +'<td data-l="End">'+fmtDate(r.seg[r.seg.length-1].iso)+'</td>'
+    +'<td data-l="Return"><span class="chip-ret '+(r.ret>=0?"up":"dn")+'">'+pct(r.ret)+'</span></td>'
+    +'<td data-l="CAGR" class="'+(r.cagr==null?"muted":cls(r.cagr))+'">'+(r.cagr==null?"—":pct(r.cagr))+'</td>'
+    +'<td data-l="Best day" class="pos">'+(r.best?pct(r.best.v):"—")+'</td>'
+    +'<td data-l="Worst day" class="neg">'+(r.worst?pct(r.worst.v):"—")+'</td>'
+    +'<td data-l="Max drawdown" class="neg">'+pct(r.mdd)+'</td></tr>'
+  ).join("");
+}
+
+async function cmpAdd(sym){
+  sym=String(sym||"").toUpperCase();
+  if(!sym||CMP.items.length>=4||CMP.items.some(i=>i.symbol===sym))return;
+  const item={symbol:sym,name:sym,rows:[],loading:true};
+  CMP.items.push(item);
+  renderCompare();
+  try{
+    const r=await fetch(api("/api/quote")+"?symbol="+encodeURIComponent(sym),{cache:"no-store"});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||r.status);
+    item.name=j.name;item.rows=decodeSeries(j.series);item.loading=false;
+  }catch(e){
+    CMP.items=CMP.items.filter(i=>i!==item);
+  }
+  renderCompare();
+}
+
+/* the compare box reuses the same search endpoint, with its own result list */
+(function wireCompareSearch(){
+  const box=document.getElementById("cmpSearch"),list=document.getElementById("cmpResults");
+  let t=0,seq=0;
+  box.addEventListener("input",()=>{
+    const q=box.value.trim();
+    clearTimeout(t);
+    if(!q){list.hidden=true;return;}
+    t=setTimeout(async()=>{
+      const my=++seq;
+      try{
+        const r=await fetch(api("/api/search")+"?q="+encodeURIComponent(q),{cache:"no-store"});
+        const j=await r.json();
+        if(my!==seq)return;
+        const res=j.results||[];
+        list.innerHTML=res.length
+          ? res.map(x=>'<button data-cmpadd="'+x.symbol+'"><span class="sym">'+x.symbol
+              +'</span><span class="nm">'+x.name+'</span><span class="ex">'+x.exchange+'</span></button>').join("")
+          : '<div class="empty">Nothing matched.</div>';
+        list.hidden=false;
+      }catch(e){list.hidden=true;}
+    },180);
+  });
+  document.addEventListener("click",e=>{
+    if(!e.target.closest("#compare .pbox"))list.hidden=true;
+    const add=e.target.closest("[data-cmpadd]");
+    if(add){cmpAdd(add.dataset.cmpadd);box.value="";list.hidden=true;return;}
+    const del=e.target.closest("[data-cmpdel]");
+    if(del){CMP.items=CMP.items.filter(i=>i.symbol!==del.dataset.cmpdel);renderCompare();return;}
+    const cp=e.target.closest("[data-cp]");
+    if(cp){
+      CMP.span=cp.dataset.cp;
+      document.querySelectorAll("#cmpPresets .chip").forEach(c=>c.classList.toggle("on",c===cp));
+      renderCompare();
+    }
+  });
+})();
+
 /* ================================================================= symbols */
 /* A few shortcuts only. The searchable universe is not written here — it is fetched
    from the exchange's own listing file by /api/search. */
@@ -1492,6 +1759,14 @@ function boot(isRefresh){
   renderChrome(nBig);
   renderActions();
   renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();
+  /* Seed the comparison once, from data already in memory, so the section is never
+     an empty box on arrival. After that it is the reader's to curate. */
+  if(!CMP.seeded){
+    CMP.seeded=true;
+    CMP.items.push({symbol:INSTRUMENT.symbol,name:INSTRUMENT.name,rows:ROWS.slice(),loading:false});
+    if(INSTRUMENT.symbol==="^NSEI")cmpAdd("RELIANCE.NS");else cmpAdd("^NSEI");
+  }
+  renderCompare();
   if(!isRefresh){
     const last=ROWS[ROWS.length-1];
     const f=document.getElementById("dFrom"),t=document.getElementById("dTo");
