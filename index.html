@@ -233,6 +233,69 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 
 #cdnfail{display:none;margin:16px 0;padding:15px 17px;background:#FBD5CF;border:2px solid var(--hard);font-size:13.5px}
 
+/* ============================================================ instrument picker */
+.picker{margin-top:18px;padding:18px 20px 16px;position:relative;z-index:40}
+.plabel{
+  display:block;font-family:var(--fm);font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink3);font-weight:700;margin-bottom:9px
+}
+.pbox{position:relative}
+#symSearch{
+  width:100%;font-family:var(--fm);font-size:15px;padding:13px 15px;color:var(--ink);
+  background:var(--surface);border:2px solid var(--hard);border-radius:0;
+  box-shadow:4px 4px 0 var(--hard);outline:none
+}
+#symSearch:focus{background:var(--hi-soft)}
+#symSearch::placeholder{color:var(--ink3)}
+.presults{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:50;max-height:340px;
+  overflow-y:auto;background:var(--surface);border:2px solid var(--hard);
+  box-shadow:6px 6px 0 var(--hard)
+}
+.presults button{
+  display:flex;width:100%;gap:10px;align-items:baseline;text-align:left;cursor:pointer;
+  background:none;border:none;border-bottom:1px solid var(--line);padding:11px 13px;
+  font-family:var(--fm);font-size:12.5px;color:var(--ink)
+}
+.presults button:last-child{border-bottom:none}
+.presults button:hover,.presults button.cur{background:var(--hi)}
+.presults .sym{font-weight:700;flex:0 0 auto}
+.presults .nm{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+.presults .ex{font-size:9.5px;letter-spacing:.1em;color:var(--ink3);flex:0 0 auto}
+.presults .empty{padding:13px;font-family:var(--fm);font-size:12px;color:var(--ink3)}
+.pquick{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.pquick button{
+  font-family:var(--fm);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;
+  background:var(--surface);border:2px solid var(--hard);color:var(--ink);border-radius:0
+}
+.pquick button:hover{background:var(--hi)}
+.pquick button.on{background:var(--hi);box-shadow:3px 3px 0 var(--hard)}
+.pnow{
+  margin-top:12px;font-family:var(--fm);font-size:12px;color:var(--ink2);
+  display:flex;gap:9px;align-items:baseline;flex-wrap:wrap
+}
+.pnow b{font-size:14px;color:var(--ink)}
+.pnow .ex{font-size:10px;letter-spacing:.1em;color:var(--ink3);text-transform:uppercase}
+.loading{
+  display:inline-block;font-family:var(--fm);font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;background:var(--hard);color:var(--hi);
+  padding:3px 9px
+}
+#loadErr{
+  display:none;margin-top:12px;padding:11px 13px;background:#FBD5CF;
+  border:2px solid var(--hard);font-size:13px
+}
+
+/* ============================================================ corporate actions */
+.calist{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(232px,1fr))}
+.caitem{
+  display:flex;gap:10px;align-items:baseline;font-family:var(--fm);font-size:12px;
+  padding:9px 11px;border-radius:10px
+}
+.caitem .d{color:var(--ink2);flex:0 0 auto}
+.caitem .v{font-weight:700;margin-left:auto}
+.canone{font-family:var(--fm);font-size:12.5px;color:var(--ink3)}
+
 /* ============================================================ mobile nav */
 /* Thumb-reachable section switcher. Desktop has the whole page in view; a phone
    does not, so it gets a fixed bar instead of an 8,000px scroll. */
@@ -333,12 +396,27 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <header>
   <div class="wrap">
     <div class="masthead">
-      <div class="eyebrow">NSE · India · Price index · Daily closes</div>
-      <h1>NIFTY 50<br>Historical Analysis<br><span id="titleRange" class="arrow">2016 → 2026</span></h1>
-      <p class="sub">A study of how the index actually moved, one calendar year at a time. Every point is a
-      real daily close from the exchange record — nothing smoothed, averaged or estimated.</p>
+      <div class="eyebrow">NSE · BSE · India · Daily closes</div>
+      <h1><span id="instName">NIFTY 50</span><br>Historical Analysis<br><span id="titleRange" class="arrow">2016 → 2026</span></h1>
+      <p class="sub">A study of how any Indian stock or index actually moved, one calendar year at a
+      time. Every point is a real daily close from the exchange record — nothing smoothed, averaged
+      or estimated.</p>
       <div class="tagrow" id="tagrow"></div>
     </div>
+
+    <div class="picker neu">
+      <label class="plabel" for="symSearch">Instrument — any listed Indian stock or index</label>
+      <div class="pbox">
+        <input id="symSearch" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Search by name or symbol — Reliance, TCS, Infosys, SBIN…"
+               aria-label="Search for a stock or index">
+        <div id="symResults" class="presults" hidden></div>
+      </div>
+      <div class="pquick" id="symQuick"></div>
+      <div class="pnow" id="symNow"></div>
+      <div id="loadErr"></div>
+    </div>
+
     <div id="cdnfail">
       <b>Charts could not load.</b> This page pulls its charting library from a CDN, so it needs an
       internet connection the first time you open it. All the tables and statistics below still work.
@@ -469,8 +547,10 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   <div class="wrap">
     <div class="shead">
       <span class="snum">07</span><h2>The biggest single days</h2>
-      <p>Detected straight from the data — every session that moved more than 2.5% either way, ranked.
-      Where the driver is well documented it is named; where it isn't, the move is shown without a
+      <p>Detected straight from the data — every session that moved more than
+      <b id="movesCaption">2.5</b>% either way, ranked. That threshold is derived from this
+      instrument's own typical daily move, so it adapts to a calm index or a volatile stock.
+      Market-wide drivers are named where documented; otherwise the move is shown without a
       guess attached.</p>
     </div>
     <div class="neu tablewrap">
@@ -482,9 +562,20 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
   </div>
 </section>
 
+<section id="actions">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">08</span><h2>Corporate actions</h2>
+      <p>Splits and dividends reported by the exchange feed for this instrument. Nothing here is
+      written by hand — each company carries its own record, so it is empty for an index.</p>
+    </div>
+    <div class="neu notes" id="actionsBox"></div>
+  </div>
+</section>
+
 <section id="notes">
   <div class="wrap">
-    <div class="shead"><span class="snum">08</span><h2>Source &amp; method</h2></div>
+    <div class="shead"><span class="snum">09</span><h2>Source &amp; method</h2></div>
     <div class="neu notes">
       <h4>Data source</h4>
       <p>Daily open / high / low / close for the NIFTY 50 price index, built from two sources and
@@ -502,10 +593,36 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
       price for those years.</p>
 
       <div class="callout">
-        <b>Why the history starts in September 2007.</b> No source I can reach publishes reliable daily
-        NIFTY 50 closes before then — NSE's archive does not go back that far, and the index provider's
-        bulk endpoint is closed. Rather than fill the gap with estimates, the record simply begins where
-        the real data begins.
+        <b>That verification covers the NIFTY 50 series specifically.</b> Every other instrument —
+        any of the ~2,500 listed companies you can search — comes from the bulk feed alone. It is the
+        same feed that matched NSE exactly on all 195 sampled index days, so it is not suspect, but it
+        has not been reconciled security by security against the exchange record, and it should not be
+        treated as though it had. Treat single-stock figures as good, not audited.
+      </div>
+
+      <h4>Coverage beyond the index</h4>
+      <ul>
+        <li>Any NSE (<code>.NS</code>) or BSE (<code>.BO</code>) listing, plus the major indices. The
+        searchable list is pulled from <b>NSE's own equity master file</b> at request time rather than
+        written into this page, so newly listed companies appear without anything being edited.</li>
+        <li>Prices are <b>split-adjusted</b> by the feed, so a 2:1 split shows as continuous history
+        rather than a phantom 50% crash.</li>
+        <li><b>Splits and dividends are the instrument's own</b>, reported by the exchange feed and
+        listed under Corporate actions. Nothing per-company is hard-coded here.</li>
+        <li>The named market events are <b>whole-of-market days</b> — budgets, elections, the COVID
+        crash — which moved every Indian listing, so they apply whichever instrument is loaded.</li>
+        <li>The "biggest single days" threshold is derived from <b>each instrument's own typical daily
+        move</b>, so it is stricter for a calm index than for a volatile small-cap.</li>
+        <li>History length varies by listing. A company that listed in 2022 simply starts in 2022,
+        and the default window follows it rather than showing empty years.</li>
+      </ul>
+
+      <div class="callout">
+        <b>Why the NIFTY history starts in September 2007.</b> No source I can reach publishes reliable
+        daily NIFTY 50 closes before then — NSE's archive does not go back that far, and the index
+        provider's bulk endpoint is closed. Rather than fill the gap with estimates, the record begins
+        where the real data begins. Individual shares often go back further; Reliance and Infosys both
+        reach 1996.
       </div>
 
       <h4>Calculation methodology</h4>
@@ -595,13 +712,39 @@ function hydrate(raw){
   /* daily change vs previous session, carried across year boundaries */
   for(let i=0;i<ROWS.length;i++) ROWS[i].chg = i? (ROWS[i].c-ROWS[i-1].c)/ROWS[i-1].c*100 : null;
   BASELINE_LAST=ROWS[ROWS.length-1].iso;
+  CORE_START=Math.max(2016,ROWS[0].y);
+  MOVE_PCT=moveThreshold();
   rebuildYears();
 }
 
+/* A "big day" means something different for a steady index than for a volatile small-cap,
+   so the threshold is derived from the instrument's own typical daily move rather than
+   fixed at one number. */
+function moveThreshold(){
+  const a=[];
+  for(let i=1;i<ROWS.length;i++)if(ROWS[i].chg!=null)a.push(Math.abs(ROWS[i].chg));
+  if(a.length<30)return 2.5;
+  a.sort((x,y)=>x-y);
+  const med=a[Math.floor(a.length/2)];
+  return Math.min(12,Math.max(2,Math.round(med*4*2)/2));
+}
+
+/* ================================================================= instrument */
+/* Whatever is currently loaded. Every section below reads from this rather than
+   assuming an index, so the same page serves any listed stock. */
+const INSTRUMENT={
+  symbol:"^NSEI",name:"NIFTY 50",exchange:"NSE",currency:"INR",type:"INDEX",
+  splits:[],dividends:[]
+};
+const IS_INDEX=()=>INSTRUMENT.symbol.startsWith("^")||INSTRUMENT.type==="INDEX";
+
 /* ================================================================= events */
-/* Curated only where the driver is well documented. Anything unverified is
-   deliberately absent — the move still shows up, just without a caption. */
-const EVENTS=[
+/* MARKET_EVENTS are whole-of-market days: they moved every Indian listing, so they
+   apply whichever instrument is loaded. Anything instrument-specific — splits,
+   dividends — arrives from the exchange feed instead of being written here.
+   Curated only where the driver is well documented; unverified moves still appear
+   in the data, just without a caption. */
+const MARKET_EVENTS=[
   {d:"2008-01-21",t:"Global credit-crisis sell-off"},
   {d:"2008-09-15",t:"Lehman Brothers collapses"},
   {d:"2008-10-24",t:"Peak of the global panic"},
@@ -637,7 +780,23 @@ const EVENTS=[
   {d:"2026-03-19",t:"Global sell-off, crude spike, hawkish Fed; HDFC Bank chairman resigns"},
   {d:"2026-03-30",t:"West Asia conflict — Brent surges, rupee hits a record 95/USD"}
 ];
-const EVENT_BY_DATE={}; EVENTS.forEach(e=>EVENT_BY_DATE[e.d]=e.t);
+
+/* The event set actually in play = market-wide days + this instrument's own splits.
+   Dividends are deliberately left off the plot (a long-listed company has dozens) and
+   listed in the corporate-actions section instead. */
+let EVENTS=MARKET_EVENTS.slice();
+let EVENT_BY_DATE={};
+function rebuildEvents(){
+  EVENTS=MARKET_EVENTS.concat(
+    INSTRUMENT.splits.map(s=>({d:s[0],t:"Stock split "+s[1],kind:"split"}))
+  ).sort((a,b)=>a.d<b.d?-1:1);
+  EVENT_BY_DATE={};
+  EVENTS.forEach(e=>EVENT_BY_DATE[e.d]=e.t);
+  INSTRUMENT.dividends.forEach(d=>{
+    if(!EVENT_BY_DATE[d[0]])EVENT_BY_DATE[d[0]]="Dividend ₹"+d[1];
+  });
+}
+rebuildEvents();
 
 /* ================================================================= format */
 const NF=new Intl.NumberFormat("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -690,7 +849,10 @@ function computeStats(rows,prevClose){
    arrive — nothing here is pinned to a hard-coded list of years. */
 const YEARS=[];
 const yearOf=y=>YEARS.find(x=>x.year===y);
-const CORE_START=2016;
+/* The default window is the last ~11 years, but never earlier than the instrument's
+   own first session — a company listed in 2021 should not open on eleven empty years. */
+let CORE_START=2016;
+let MOVE_PCT=2.5;
 let WINDOW="core";
 const windowYears=()=>YEARS.filter(y=>WINDOW==="full"||y.year>=CORE_START);
 
@@ -1031,8 +1193,10 @@ function renderReturnsChart(){
 }
 
 function renderMoves(){
-  const big=ROWS.filter(r=>r._ch!=null&&Math.abs(r._ch)>=2.5)
+  const big=ROWS.filter(r=>r._ch!=null&&Math.abs(r._ch)>=MOVE_PCT)
                 .sort((a,b)=>Math.abs(b._ch)-Math.abs(a._ch));
+  const cap=document.getElementById("movesCaption");
+  if(cap)cap.textContent=MOVE_PCT.toFixed(1);
   document.querySelector("#movesTable tbody").innerHTML=big.slice(0,40).map(r=>{
     const prev=ROWS[ROWS.indexOf(r)-1];
     const pts=r.c-(prev?prev.c:r.c);
@@ -1097,10 +1261,48 @@ function applyPreset(p){
 }
 
 /* ================================================================= chrome */
+function renderActions(){
+  const box=document.getElementById("actionsBox");
+  const sp=INSTRUMENT.splits,dv=INSTRUMENT.dividends;
+  if(!sp.length&&!dv.length){
+    box.innerHTML='<p class="canone">The exchange feed reports no splits or dividends for '
+      +INSTRUMENT.name+'. That is expected for an index — an index level is not a share, '
+      +'so it neither splits nor pays.</p>';
+    return;
+  }
+  let h="";
+  if(sp.length){
+    h+='<h4>Splits ('+sp.length+')</h4><div class="calist">'
+      +sp.slice().reverse().map(s=>'<div class="neu-in caitem"><span class="d">'
+        +fmtDate(s[0])+'</span><span class="v">'+s[1]+'</span></div>').join("")
+      +'</div>';
+  }
+  if(dv.length){
+    const recent=dv.slice().reverse();
+    const total=dv.reduce((a,b)=>a+b[1],0);
+    h+='<h4>Dividends ('+dv.length+' · '+fmtDate(dv[0][0])+' onward)</h4>'
+      +'<p>Declared per share, as reported by the feed. Total across the whole record: <b>₹'
+      +total.toFixed(2)+'</b> per share. The charts plot the <b>price</b>, which excludes these.</p>'
+      +'<div class="calist">'
+      +recent.slice(0,24).map(d=>'<div class="neu-in caitem"><span class="d">'
+        +fmtDate(d[0])+'</span><span class="v">₹'+d[1]+'</span></div>').join("")
+      +'</div>'
+      +(recent.length>24?'<p class="canone" style="margin-top:9px">+ '+(recent.length-24)
+        +' earlier payouts not listed.</p>':"");
+  }
+  box.innerHTML=h;
+}
+
 function renderChrome(nBig){
   const first=ROWS[0],last=ROWS[ROWS.length-1];
   const core=YEARS.filter(y=>y.year>=CORE_START);
   document.getElementById("titleRange").textContent=CORE_START+" → "+last.y;
+  document.getElementById("instName").textContent=INSTRUMENT.name;
+  document.getElementById("symNow").innerHTML=
+    '<b>'+INSTRUMENT.symbol+'</b><span>'+INSTRUMENT.name+'</span>'
+    +'<span class="ex">'+(INSTRUMENT.exchange||"")+'</span>'
+    +'<span class="ex">'+NF0.format(ROWS.length)+' sessions · '+fmtDate(first.iso)
+    +' → '+fmtDate(last.iso)+'</span>';
   const cum=(last.c-core[0].stats.start)/core[0].stats.start*100;
   const ranked=[...YEARS].sort((a,b)=>b.stats.ret-a.stats.ret);
   const best=ranked[0],worst=ranked[ranked.length-1];
@@ -1115,7 +1317,7 @@ function renderChrome(nBig){
       '</div><div class="s">'+pct(best.stats.ret)+'</div></div>'
    +'<div class="neu kpi"><div class="k">Worst year</div><div class="v neg">'+worst.year+
       '</div><div class="s">'+pct(worst.stats.ret)+'</div></div>'
-   +'<div class="neu kpi"><div class="k">Days moving over 2.5%</div><div class="v">'+nBig+
+   +'<div class="neu kpi"><div class="k">Days moving over '+MOVE_PCT.toFixed(1)+'%</div><div class="v">'+nBig+
       '</div><div class="s">out of '+NF0.format(ROWS.length)+' sessions</div></div>';
   document.getElementById("tagrow").innerHTML=
     '<span class="tag">'+NF0.format(ROWS.length)+' trading sessions</span>'
@@ -1133,13 +1335,16 @@ function renderChrome(nBig){
 /* Served from Vercel the endpoint is same-origin. Opened straight off disk there is no
    origin to be relative to, so the file falls back to the deployed copy; if that is
    unreachable the page simply stays on its baseline data. */
-window.LIVE_ORIGIN="https://nifty50-historical-analysis.vercel.app";
-const LIVE_ENDPOINT="/api/nifty";
+window.LIVE_ORIGIN="https://stock-learn.vercel.app";
+/* Served from Vercel the endpoints are same-origin; opened off disk there is no origin
+   to be relative to, so it falls back to the deployed copy. */
+function api(path){
+  return (location.protocol==="file:"&&window.LIVE_ORIGIN)?window.LIVE_ORIGIN+path:path;
+}
 async function topUp(){
   const tag=document.getElementById("liveTag");
   try{
-    const base=(location.protocol==="file:"&&window.LIVE_ORIGIN)?window.LIVE_ORIGIN+LIVE_ENDPOINT:LIVE_ENDPOINT;
-    const res=await fetch(base+"?since="+BASELINE_LAST,{cache:"no-store"});
+    const res=await fetch(api("/api/quote")+"?symbol=%5ENSEI&since="+BASELINE_LAST,{cache:"no-store"});
     if(!res.ok)throw new Error(res.status);
     const j=await res.json();
     if(!j.rows||!j.rows.length){tag.textContent="Up to date";tag.className="tag live";return;}
@@ -1175,10 +1380,117 @@ function rebuildYears(){
   }
 }
 
+/* ================================================================= symbols */
+/* A few shortcuts only. The searchable universe is not written here — it is fetched
+   from the exchange's own listing file by /api/search. */
+const QUICK=[
+  ["^NSEI","NIFTY 50"],["^NSEBANK","BANK NIFTY"],["^BSESN","SENSEX"],
+  ["RELIANCE.NS","Reliance"],["TCS.NS","TCS"],["HDFCBANK.NS","HDFC Bank"],
+  ["INFY.NS","Infosys"],["SBIN.NS","SBI"],["TATASTEEL.NS","Tata Steel"]
+];
+const elSearch=document.getElementById("symSearch");
+const elResults=document.getElementById("symResults");
+const elErr=document.getElementById("loadErr");
+let searchTimer=0,searchSeq=0,loadSeq=0,cursor=-1,lastResults=[];
+
+function renderQuick(){
+  document.getElementById("symQuick").innerHTML=
+    QUICK.map(([s,n])=>'<button data-sym="'+s+'"'+(s===INSTRUMENT.symbol?' class="on"':'')+'>'+n+'</button>').join("");
+}
+
+function closeResults(){elResults.hidden=true;cursor=-1;}
+
+function showResults(list){
+  lastResults=list;cursor=-1;
+  if(!list.length){
+    elResults.innerHTML='<div class="empty">Nothing matched. Try a company name, or a symbol like RELIANCE.</div>';
+  }else{
+    elResults.innerHTML=list.map((r,i)=>
+      '<button data-sym="'+r.symbol+'" data-i="'+i+'"><span class="sym">'+r.symbol+'</span>'
+      +'<span class="nm">'+r.name+'</span><span class="ex">'+r.exchange+'</span></button>').join("");
+  }
+  elResults.hidden=false;
+}
+
+async function runSearch(q){
+  const seq=++searchSeq;
+  try{
+    const r=await fetch(api("/api/search")+"?q="+encodeURIComponent(q),{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    const j=await r.json();
+    if(seq!==searchSeq)return;                       /* a newer keystroke already won */
+    showResults(j.results||[]);
+  }catch(e){
+    if(seq===searchSeq)showResults([]);
+  }
+}
+
+async function loadSymbol(sym){
+  const seq=++loadSeq;
+  closeResults();
+  elErr.style.display="none";
+  const now=document.getElementById("symNow");
+  now.innerHTML='<span class="loading">Loading '+sym+'…</span>';
+  try{
+    const r=await fetch(api("/api/quote")+"?symbol="+encodeURIComponent(sym),{cache:"no-store"});
+    const j=await r.json();
+    if(seq!==loadSeq)return;                          /* superseded by a later pick */
+    if(!r.ok)throw new Error(j.error||("HTTP "+r.status));
+    INSTRUMENT.symbol=j.symbol;INSTRUMENT.name=j.name;INSTRUMENT.exchange=j.exchange;
+    INSTRUMENT.currency=j.currency;INSTRUMENT.type=j.type;
+    INSTRUMENT.splits=j.splits||[];INSTRUMENT.dividends=j.dividends||[];
+    rebuildEvents();
+    hydrate(j.series);
+    WINDOW="core";VIEW=String(ROWS[ROWS.length-1].y);
+    document.querySelectorAll("#windowSeg .chip")
+      .forEach(c=>c.classList.toggle("on",c.dataset.win==="core"));
+    boot(false);
+    renderQuick();
+    elSearch.value="";
+    history.replaceState(null,"","#symbol="+encodeURIComponent(j.symbol));
+    const tag=document.getElementById("liveTag");
+    if(tag){tag.textContent="Live data";tag.className="tag live";}
+  }catch(e){
+    if(seq!==loadSeq)return;
+    renderChrome(document.querySelectorAll("#movesTable tbody tr").length);
+    elErr.style.display="block";
+    elErr.innerHTML="<b>Could not load "+sym+".</b> "+String(e.message||e)
+      +" — the symbol may be delisted or renamed. Try searching by company name instead.";
+  }
+}
+
+elSearch.addEventListener("input",()=>{
+  const q=elSearch.value.trim();
+  clearTimeout(searchTimer);
+  if(!q){closeResults();return;}
+  searchTimer=setTimeout(()=>runSearch(q),180);
+});
+elSearch.addEventListener("keydown",e=>{
+  if(elResults.hidden||!lastResults.length){
+    if(e.key==="Enter"&&elSearch.value.trim())runSearch(elSearch.value.trim());
+    return;
+  }
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    e.preventDefault();
+    cursor=(cursor+(e.key==="ArrowDown"?1:-1)+lastResults.length)%lastResults.length;
+    [...elResults.children].forEach((c,i)=>c.classList.toggle("cur",i===cursor));
+    const cur=elResults.children[cursor];if(cur)cur.scrollIntoView({block:"nearest"});
+  }else if(e.key==="Enter"){
+    e.preventDefault();
+    loadSymbol((lastResults[cursor>=0?cursor:0]||{}).symbol);
+  }else if(e.key==="Escape"){closeResults();}
+});
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".picker"))closeResults();
+  const sb=e.target.closest("[data-sym]");
+  if(sb)loadSymbol(sb.dataset.sym);
+});
+
 /* ================================================================= boot */
 function boot(isRefresh){
   const nBig=renderMoves();
   renderChrome(nBig);
+  renderActions();
   renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();
   if(!isRefresh){
     const last=ROWS[ROWS.length-1];
@@ -1250,7 +1562,29 @@ function applyDeepLink(){
   setTimeout(()=>document.getElementById("years").scrollIntoView({behavior:"smooth"}),120);
 }
 
+/* A hash-only change does not reload the page, so a pasted #symbol= link is picked up here. */
+addEventListener("hashchange",()=>{
+  const s=hashSymbol();
+  if(s&&s!==INSTRUMENT.symbol)loadSymbol(s);
+  else applyDeepLink();
+});
+
+function hashSymbol(){
+  const m=/[#&]symbol=([^&]+)/.exec(location.hash);
+  return m?decodeURIComponent(m[1]).toUpperCase():"";
+}
+
 async function start(){
+  renderQuick();
+  const want=hashSymbol();
+
+  /* A link to some other instrument skips the baked-in NIFTY data entirely. */
+  if(want&&want!=="^NSEI"){
+    document.getElementById("symNow").innerHTML='<span class="loading">Loading '+want+'…</span>';
+    await loadSymbol(want);
+    return;
+  }
+
   if(window.NIFTY_RAW_JSON){
     hydrate(window.NIFTY_RAW_JSON);
     boot(false);applyDeepLink();
@@ -1258,9 +1592,13 @@ async function start(){
     return;
   }
   try{
-    const res=await fetch(LIVE_ENDPOINT+"?full=1",{cache:"no-store"});
+    const res=await fetch(api("/api/quote")+"?symbol=%5ENSEI",{cache:"no-store"});
     if(!res.ok)throw new Error(res.status);
-    hydrate(await res.json());
+    const j=await res.json();
+    INSTRUMENT.name=j.name;INSTRUMENT.exchange=j.exchange;
+    INSTRUMENT.splits=j.splits||[];INSTRUMENT.dividends=j.dividends||[];
+    rebuildEvents();
+    hydrate(j.series);
     boot(false);applyDeepLink();
     const tag=document.getElementById("liveTag");
     if(tag){tag.textContent="Live data";tag.className="tag live";}

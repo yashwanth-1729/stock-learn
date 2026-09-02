@@ -1,9 +1,13 @@
-# NIFTY 50 Historical Analysis
+# Indian Market Historical Analysis
 
-A visual historical study of India's NIFTY 50 index — how it actually behaved, one calendar year
+A visual historical study of any Indian stock or index — how it actually behaved, one calendar year
 at a time. Not a trading dashboard: no RSI, no MACD, no Bollinger bands. Just the real daily record.
 
-**4,673 verified trading sessions · 17 September 2007 → 1 September 2026**
+Search **any of ~2,500 NSE-listed companies**, any BSE listing, or the major indices. Opens on the
+NIFTY 50, whose series ships embedded and verified.
+
+**NIFTY 50: 4,673 verified sessions · 17 September 2007 → 1 September 2026**
+**Everything else: fetched live — Reliance and Infosys reach back to 1996**
 
 ## What's in it
 
@@ -21,7 +25,7 @@ at a time. Not a trading dashboard: no RSI, no MACD, no Bollinger bands. Just th
 
 ## Data, and why it is built this way
 
-Daily open/high/low/close for the NIFTY 50 **price** index, reconciled from two sources:
+Daily open/high/low/close. For the NIFTY 50 the series is reconciled from two sources:
 
 | Source | Role |
 | --- | --- |
@@ -44,6 +48,29 @@ Verification performed at build time:
 
 The build refuses to emit data if any of these fail.
 
+### Everything other than the NIFTY 50
+
+Any other instrument is served live by `api/quote.js` from the bulk feed. That is the same feed
+which matched NSE exactly on all 195 sampled index days, so it is not suspect — but it has **not**
+been reconciled security by security against the exchange record. Treat single-stock figures as
+good, not audited.
+
+Nothing about any company is written into this repository:
+
+- The **searchable universe** comes from NSE's own equity master file
+  (`EQUITY_L.csv`, ~2,500 listed companies), fetched and cached at request time. Newly listed
+  companies appear without anything here being edited.
+- **Splits and dividends** are the instrument's own, reported by the feed as dated events and shown
+  under Corporate actions.
+- Prices are **split-adjusted**, so a 2:1 split renders as continuous history rather than a phantom
+  50% crash.
+- The **named market events** are whole-of-market days — budgets, elections, the COVID crash — which
+  moved every Indian listing, so they apply whichever instrument is loaded.
+- The **"biggest single days" threshold adapts** to each instrument's own typical daily move: about
+  2.5% for the index, 4.5% for Reliance.
+- **History length follows the listing.** A company that listed in 2022 starts in 2022 and the
+  default window follows it, rather than showing empty years.
+
 ### Known limits, stated rather than papered over
 
 - **History starts in September 2007.** No reachable source publishes reliable daily NIFTY closes
@@ -54,21 +81,28 @@ The build refuses to emit data if any of these fail.
 - **A few Saturdays and Sundays appear.** These are real, officially settled NSE sessions — Diwali
   Muhurat trading and Union Budget weekend sittings — kept so the data matches the exchange calendar.
 - **Sessions before 2013 rest on the bulk feed alone**, since NSE's archive files do not exist for them.
-- This is a **price index**: it excludes dividends and so understates an investor's actual return.
+- Charts plot **price**, which excludes dividends and so understates an investor's actual return.
+  Declared dividends are listed separately under Corporate actions.
+- A **delisted or renamed symbol** will not resolve. Search by company name to find its current
+  ticker.
 - Nothing here is investment advice. It is a record of what already happened.
 
 ## Layout
 
 ```
-index.html      the whole study tool — self-contained, opens straight off disk
-api/nifty.js    serverless endpoint; proxies the upstream feed (it sends no CORS header)
-                ?full=1            the entire verified series
-                ?since=YYYY-MM-DD  only newer sessions, to top up the embedded baseline
+index.html      the whole study tool; ships with the NIFTY 50 series embedded
+api/quote.js    price history for any instrument (the upstream feed sends no CORS header)
+                ?symbol=RELIANCE.NS            whole history, plus splits and dividends
+                ?symbol=^NSEI&since=YYYY-MM-DD only newer sessions, to top up the baseline
+api/search.js   symbol lookup over NSE's equity master file plus live search
+                ?q=reliance
 ```
 
-`index.html` ships with the dataset embedded, so it works offline with no server. Deployed, it also
-calls `api/nifty` to pick up sessions that have happened since the build — new years appear on their
-own, because every year section is derived from the data rather than a hard-coded list.
+`index.html` opens on the NIFTY 50 using its embedded dataset, so that view works offline with no
+server. Selecting anything else fetches it from `api/quote`. New calendar years appear on their own,
+because every year section is derived from the data rather than a hard-coded list.
+
+Deep links work: `#symbol=TCS.NS` opens straight into that instrument.
 
 ## Running it
 
