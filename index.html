@@ -602,6 +602,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
         <span class="lg" style="margin-left:auto">Cell shows that month's return; colour scales with size.</span>
       </div>
       <div class="stats" id="seasonStats"></div>
+      <p class="mono" id="seasonNote" style="font-size:11px;color:#7C8291;margin:16px 2px 0;line-height:1.6"></p>
       <div class="neu-in chartbox sm" style="margin-top:18px"><canvas id="seasonChart"></canvas></div>
       <p class="mono" style="font-size:11px;color:#7C8291;margin:10px 2px 0">
         Bars are the average return for each month; the number under each is how often that month
@@ -1576,8 +1577,13 @@ function renderSeason(){
         +(v>=0?"+":"−")+Math.abs(v).toFixed(1)+'</td>';
     }
     const tot=seen?(prod-1)*100:null;
-    return '<tr><td>'+y+'</td>'+cells+'<td class="cell" style="background:'
-      +seasonColor(tot,scale*2.2)+'">'+(tot==null?"·":(tot>=0?"+":"−")+Math.abs(tot).toFixed(1))+'</td></tr>';
+    /* a year missing months is not a full-year return, so it is flagged rather than
+       quietly presented alongside the complete ones */
+    const part=seen<12;
+    return '<tr><td>'+y+(part?'<span style="color:#7C8291">*</span>':'')+'</td>'+cells
+      +'<td class="cell" style="background:'+seasonColor(tot,scale*2.2)+'"'
+      +(part?' title="'+seen+' of 12 months on record"':'')+'>'
+      +(tot==null?"·":(tot>=0?"+":"−")+Math.abs(tot).toFixed(1))+(part?"*":"")+'</td></tr>';
   }).join("");
 
   /* per-month aggregates */
@@ -1609,6 +1615,22 @@ function renderSeason(){
    +statCard("Most consistent",MON[mostRel.m],mostRel.hit.toFixed(0)+"% of years positive")
    +statCard("Least consistent",MON[leastRel.m],leastRel.hit.toFixed(0)+"% of years positive")
    +statCard("Months measured",String(data.length),years.length+" calendar years");
+
+  /* Twelve readings per month is a pattern; four is an anecdote. Say which this is. */
+  const note=document.getElementById("seasonNote");
+  const perMonth=Math.min.apply(null,agg.filter(Boolean).map(a=>a.n));
+  if(note){
+    note.innerHTML=(perMonth<8
+      ? '<b>Read this loosely.</b> Only '+perMonth+' observations back each month here, which is far '
+        +'too few for a seasonal pattern to mean anything. It describes what happened, and little more.'
+      : (function(){
+          const hi=Math.max.apply(null,agg.filter(Boolean).map(a=>a.n));
+          return 'Each month rests on '+(hi===perMonth?perMonth:perMonth+"–"+hi)
+            +' observations. Even then, a tendency across '+years.length+' years is not a rule — '
+            +'markets are under no obligation to repeat it.';
+        })())
+      +' Years marked <b>*</b> do not have all twelve months on record.';
+  }
 
   if(!READY)return;
   if(CHARTS.season){CHARTS.season.destroy();delete CHARTS.season;}
