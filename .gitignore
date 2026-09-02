@@ -3,3 +3,6 @@
 node_modules/
 *.log
 index.deploy.html
+
+# harvested market data - large, rebuildable with tools/build_bhavcopy.py
+data/
