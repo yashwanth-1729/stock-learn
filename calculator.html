@@ -235,7 +235,8 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
         </div>
         <div class="field">
           <label for="aYears">For how many years</label>
-          <input id="aYears" type="number" min="1" max="60" step="1" value="10">
+          <input id="aYears" type="number" min="1" max="100" step="1" value="10">
+          <span class="note" id="aYearsNote"></span>
         </div>
       </div>
       <div class="results" id="aResultsBox"></div>
@@ -300,7 +301,7 @@ footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
 "use strict";
-window.LIVE_ORIGIN="https://stock-learn.vercel.app";
+window.LIVE_ORIGIN="https://stock-learn-ten.vercel.app";
 function api(p){return (location.protocol==="file:"&&window.LIVE_ORIGIN)?window.LIVE_ORIGIN+p:p;}
 
 const NF=new Intl.NumberFormat("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -553,7 +554,13 @@ async function loadReal(sym){
 function runAssume(){
   const P=Math.max(1,+document.getElementById("aAmt").value||0);
   const r=(+document.getElementById("aRate").value||0)/100;
-  const n=Math.max(1,Math.min(60,+document.getElementById("aYears").value||1));
+  const typed=+document.getElementById("aYears").value||1;
+  const n=Math.max(1,Math.min(100,typed));
+  /* Clamping without saying so made 70, 80 and 90 all silently return the 60-year figure. */
+  const cap=document.getElementById("aYearsNote");
+  if(cap)cap.textContent=typed>100
+    ? "Capped at 100 years — you asked for "+typed+"."
+    : (typed<1?"Minimum is 1 year.":"");
   const how=document.getElementById("aHow").value;
   const i=r/12, m=n*12;
   const results=[];
