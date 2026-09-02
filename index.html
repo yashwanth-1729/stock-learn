@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIFTY 50 Historical Analysis</title>
+<meta name="description" content="A visual historical study of the NIFTY 50 index — daily closes, year by year, from 2007 to today.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ tokens */
+:root{
+  color-scheme: light;
+  --bg:#E9EBF0;
+  --surface:#E9EBF0;
+  --sd:#C2C5CE;           /* neumorphic dark shadow */
+  --sl:#FFFFFF;           /* neumorphic light shadow */
+  --ink:#101014;
+  --ink2:#4A4F5C;
+  --ink3:#7C8291;
+  --line:#D3D7E0;
+  --pos:#1B7F4B;
+  --posf:#2FA96B;
+  --neg:#C0392B;
+  --negf:#E05545;
+  --accent:#2C2CE0;
+  --hi:#FFE24D;
+  --hi-soft:#FFF6CE;
+  --hi-deep:#F5C400;
+  --hard:#101014;
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--fd);font-size:15px;line-height:1.55;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+a{color:var(--accent)}
+.wrap{max-width:1220px;margin:0 auto;padding:0 22px}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)}
+.neg{color:var(--neg)}
+.muted{color:var(--ink3)}
+
+/* ============================================================ surfaces */
+.neu{
+  background:var(--surface);border-radius:var(--r);
+  box-shadow:7px 7px 16px var(--sd),-7px -7px 16px var(--sl);
+}
+.neu-in{
+  background:var(--surface);border-radius:var(--r);
+  box-shadow:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);
+}
+.brut{border:2px solid var(--hard);box-shadow:5px 5px 0 var(--hard);border-radius:0}
+
+/* ============================================================ header */
+header{padding:44px 0 26px}
+.masthead{padding:30px 28px;background:var(--hi);border:2px solid var(--hard);box-shadow:8px 8px 0 var(--hard)}
+.eyebrow{
+  font-family:var(--fm);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-weight:700;color:var(--hard);margin-bottom:14px
+}
+h1{font-size:clamp(28px,6.2vw,58px);text-transform:uppercase;letter-spacing:-.035em}
+h1 .arrow{font-family:var(--fm);font-weight:400}
+.sub{margin-top:14px;font-size:14px;color:#3A3A20;max-width:62ch}
+.tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tag{
+  font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 10px;border:2px solid var(--hard);background:var(--surface);color:var(--hard)
+}
+.tag.live{background:var(--posf);color:#062}
+.tag.stale{background:var(--sd)}
+
+/* ============================================================ sections */
+section{padding:34px 0}
+.shead{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.snum{
+  font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.1em;
+  background:var(--hi);color:var(--hard);border:2px solid var(--hard);
+  box-shadow:3px 3px 0 var(--hard);padding:4px 8px;line-height:1
+}
+/* marker-pen highlight keeps the yellow running down the whole page */
+.shead h2{
+  font-size:clamp(19px,3.4vw,27px);text-transform:uppercase;
+  background-image:linear-gradient(transparent 58%,var(--hi) 58%,var(--hi) 94%,transparent 94%);
+  padding-right:.15em
+}
+.shead p{margin:0;font-size:13px;color:var(--ink3);flex-basis:100%;max-width:78ch}
+
+/* ============================================================ kpis */
+.kpis{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(212px,1fr))}
+.kpi{padding:20px 20px 18px}
+.kpi .k{font-family:var(--fm);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3)}
+.kpi .v{font-family:var(--fm);font-size:clamp(23px,4vw,32px);font-weight:700;margin-top:9px;letter-spacing:-.02em}
+.kpi .s{font-size:12.5px;color:var(--ink2);margin-top:5px}
+/* the headline tile is a brutalist yellow block rather than a soft neumorphic one */
+.kpi.accent{
+  background:var(--hi);border:2px solid var(--hard);border-radius:0;
+  box-shadow:6px 6px 0 var(--hard)
+}
+.kpi.accent .k{color:#6B5B00}
+.kpi.accent .v,.kpi.accent .s{color:var(--hard)}
+
+/* ============================================================ table */
+.tablewrap{overflow-x:auto;border-radius:var(--r);padding:6px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-family:var(--fm);font-size:13px}
+th,td{padding:11px 13px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--hard);
+  font-weight:700;background:var(--hi);
+  border-top:2px solid var(--hard);border-bottom:2px solid var(--hard)
+}
+tbody tr{border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+tbody tr:hover{background:var(--hi-soft)}
+tbody tr:last-child{border-bottom:none}
+td.y{font-weight:700;font-size:14px}
+.chip-ret{
+  display:inline-block;min-width:78px;text-align:right;padding:3px 8px;font-weight:700;
+  border:2px solid var(--hard)
+}
+.chip-ret.up{background:#BFEBD3}
+.chip-ret.dn{background:#FBD5CF}
+tr.partial td:first-child::after{content:' YTD';font-size:9px;letter-spacing:.1em;color:var(--ink3)}
+
+/* ============================================================ controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.chip{
+  font-family:var(--fm);font-size:12.5px;font-weight:700;padding:9px 13px;cursor:pointer;
+  background:var(--surface);color:var(--ink2);border:2px solid transparent;border-radius:11px;
+  box-shadow:4px 4px 9px var(--sd),-4px -4px 9px var(--sl);transition:all .13s
+}
+.chip:hover{color:var(--ink);background:var(--hi-soft)}
+.chip:active{box-shadow:inset 3px 3px 7px var(--sd),inset -3px -3px 7px var(--sl)}
+.chip.on{
+  background:var(--hi);color:var(--hard);border:2px solid var(--hard);border-radius:0;
+  box-shadow:4px 4px 0 var(--hard)
+}
+.chip.wide{letter-spacing:.08em;text-transform:uppercase;font-size:11.5px}
+.seg{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg-label{
+  font-family:var(--fm);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink3);font-weight:700;margin-right:2px
+}
+select,input[type=date]{
+  font-family:var(--fm);font-size:13px;padding:10px 12px;color:var(--ink);
+  background:var(--surface);border:2px solid var(--hard);border-radius:0;
+}
+.selwrap{display:none}
+
+/* ============================================================ year block */
+.yblock{margin-bottom:30px;padding:22px 22px 20px}
+.yhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.yhead h3{font-family:var(--fm);font-size:32px;font-weight:700;letter-spacing:-.03em}
+.badge{
+  font-family:var(--fm);font-weight:700;font-size:15px;padding:5px 11px;
+  border:2px solid var(--hard);box-shadow:3px 3px 0 var(--hard)
+}
+.badge.up{background:#BFEBD3}
+.badge.dn{background:#FBD5CF}
+.yhead .span{font-family:var(--fm);font-size:11.5px;color:var(--ink3);margin-left:auto}
+.chartbox{position:relative;height:410px;padding:12px 6px 4px;border-radius:12px}
+.chartbox.sm{height:330px}
+.chartfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:9px}
+.hint{font-family:var(--fm);font-size:10.5px;color:var(--ink3);letter-spacing:.04em}
+.m-only{display:none}
+@media (max-width:620px){.d-only{display:none}.m-only{display:inline}}
+.btn-reset{
+  font-family:var(--fm);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:6px 11px;cursor:pointer;background:var(--hi);border:2px solid var(--hard);color:var(--hard);
+  box-shadow:3px 3px 0 var(--hard)
+}
+.btn-reset:hover{background:var(--hard);color:var(--hi)}
+.btn-reset:active{box-shadow:none;transform:translate(3px,3px)}
+
+/* ============================================================ stat grid */
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));margin-top:18px}
+.stat{padding:13px 14px;border-radius:12px}
+.stat .k{font-family:var(--fm);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.stat .v{font-family:var(--fm);font-size:17px;font-weight:700;margin-top:5px;letter-spacing:-.01em}
+.stat .n{font-family:var(--fm);font-size:10.5px;color:var(--ink3);margin-top:2px}
+
+/* ============================================================ moves */
+.movegrid{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:18px}
+.movecol h4{
+  font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:9px
+}
+.moverow{
+  display:flex;gap:10px;align-items:baseline;font-family:var(--fm);font-size:12px;
+  padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.45)
+}
+.moverow+.moverow{margin-top:4px}
+.moverow .d{color:var(--ink2);min-width:88px}
+.moverow .p{font-weight:700;min-width:62px;text-align:right}
+.moverow .why{color:var(--ink3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============================================================ notes */
+.notes{padding:26px 26px 22px}
+.notes h4{
+  font-family:var(--fm);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  margin:20px 0 8px;color:var(--hard)
+}
+.notes h4:first-child{margin-top:0}
+.notes p,.notes li{font-size:13.5px;color:var(--ink2);margin:0 0 8px}
+.notes ul{margin:0 0 8px;padding-left:19px}
+.notes code{
+  font-family:var(--fm);font-size:12.5px;background:#DDE0E8;padding:2px 6px;border-radius:4px;
+  overflow-wrap:anywhere;word-break:break-word
+}
+/* events strip under a chart */
+.evstrip{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.evstrip .ev{
+  display:inline-flex;gap:7px;align-items:baseline;font-family:var(--fm);font-size:10.5px;
+  padding:5px 9px;background:rgba(44,44,224,.08);border-left:3px solid var(--accent);color:var(--ink2)
+}
+.evstrip .ev b{color:var(--accent);font-weight:700}
+.evstrip .lead{
+  font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);font-weight:700;align-self:center;margin-right:2px
+}
+.callout{padding:15px 17px;background:var(--hi);border:2px solid var(--hard);margin:16px 0;font-size:13.5px}
+.callout b{font-weight:700}
+footer{padding:34px 0 60px;text-align:center}
+footer .rule{height:8px;background:var(--hi);border:2px solid var(--hard);margin-bottom:18px}
+footer .mono{font-size:11px;color:var(--ink3);letter-spacing:.06em}
+
+#cdnfail{display:none;margin:16px 0;padding:15px 17px;background:#FBD5CF;border:2px solid var(--hard);font-size:13.5px}
+
+/* ============================================================ mobile nav */
+/* Thumb-reachable section switcher. Desktop has the whole page in view; a phone
+   does not, so it gets a fixed bar instead of an 8,000px scroll. */
+#mnav{display:none}
+@media (max-width:720px){
+  #mnav{
+    display:grid;grid-template-columns:repeat(5,1fr);position:fixed;
+    left:0;right:0;bottom:0;z-index:60;background:var(--hi);
+    border-top:2px solid var(--hard);
+    padding-bottom:env(safe-area-inset-bottom,0)
+  }
+  #mnav button{
+    appearance:none;background:none;border:none;cursor:pointer;
+    font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:#6B5B00;padding:11px 2px 10px;line-height:1.25;
+    border-right:2px solid rgba(16,16,20,.14)
+  }
+  #mnav button:last-child{border-right:none}
+  #mnav button .ic{display:block;font-size:15px;margin-bottom:3px;line-height:1}
+  #mnav button.on{background:var(--hard);color:var(--hi)}
+  body{padding-bottom:62px}
+}
+
+/* ============================================================ responsive */
+@media (max-width:820px){
+  .movegrid{grid-template-columns:1fr}
+  .chartbox{height:320px}
+  .chartbox.sm{height:280px}
+}
+@media (max-width:620px){
+  .wrap{padding:0 14px}
+  header{padding:22px 0 14px}
+  .masthead{padding:20px 17px;box-shadow:6px 6px 0 var(--hard)}
+  .yblock{padding:16px 12px 15px}
+  .chartbox{height:300px;padding:8px 0 0}
+  .chartbox.sm{height:270px}
+  .yhead h3{font-size:26px}
+  .yhead .span{margin-left:0;flex-basis:100%}
+  .stats{grid-template-columns:1fr 1fr;gap:9px}
+  .stat{padding:11px 12px}
+  .stat .v{font-size:16px}
+  section{padding:22px 0}
+  .shead{margin-bottom:14px}
+  .shead p{font-size:12.5px}
+
+  /* the year picker becomes a horizontally swipeable strip, not a dropdown */
+  .selwrap{display:none}
+  .yearchips{
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+    padding:4px 2px 10px;margin:0 -14px;padding-left:14px;padding-right:14px;
+    scrollbar-width:none
+  }
+  .yearchips::-webkit-scrollbar{display:none}
+  .yearchips .chip{flex:0 0 auto;scroll-snap-align:center;min-height:44px}
+  .controls{gap:8px;margin-bottom:16px}
+  .controls input[type=date]{flex:1 1 40%;min-width:0;min-height:44px}
+  #presets{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  #presets .chip{padding:11px 4px;text-align:center;min-height:44px}
+  #windowSeg{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  #windowSeg .chip{padding:11px 6px;text-align:center;min-height:44px}
+  .btn-reset{min-height:38px;padding:8px 13px}
+
+  /* Wide tables are miserable on a phone, so each row becomes its own card. */
+  .tablewrap{overflow:visible;padding:0;background:none;box-shadow:none}
+  .tablewrap table{min-width:0;display:block}
+  .tablewrap thead{display:none}
+  .tablewrap tbody{display:block}
+  .tablewrap tbody tr{
+    display:block;background:var(--surface);border:2px solid var(--hard);
+    box-shadow:4px 4px 0 var(--hard);margin-bottom:14px;padding:11px 13px
+  }
+  .tablewrap tbody tr:hover{background:var(--hi-soft)}
+  .tablewrap td{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding:5px 0;white-space:normal;text-align:right;border-bottom:1px dotted var(--line)
+  }
+  .tablewrap td:last-child{border-bottom:none}
+  .tablewrap td::before{
+    content:attr(data-l);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink3);font-weight:700;text-align:left;flex:0 0 auto
+  }
+  /* the year cell reads as the card's title */
+  .tablewrap td.y{
+    display:block;text-align:left;font-size:21px;padding:0 0 8px;
+    border-bottom:2px solid var(--hard);margin-bottom:6px
+  }
+  .tablewrap td.y::before{content:none}
+  .tablewrap tr.partial td.y::after{content:' YTD';font-size:10px;color:var(--ink3)}
+  .chip-ret{min-width:0}
+  .moverow .why{white-space:normal;overflow:visible}
+  .evstrip .ev{font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="eyebrow">NSE · India · Price index · Daily closes</div>
+      <h1>NIFTY 50<br>Historical Analysis<br><span id="titleRange" class="arrow">2016 → 2026</span></h1>
+      <p class="sub">A study of how the index actually moved, one calendar year at a time. Every point is a
+      real daily close from the exchange record — nothing smoothed, averaged or estimated.</p>
+      <div class="tagrow" id="tagrow"></div>
+    </div>
+    <div id="cdnfail">
+      <b>Charts could not load.</b> This page pulls its charting library from a CDN, so it needs an
+      internet connection the first time you open it. All the tables and statistics below still work.
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="shead"><span class="snum">01</span><h2>At a glance</h2></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</section>
+
+<section id="summary">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">02</span><h2>Year by year</h2>
+      <p><b>Annual Return %</b> compares the first trading day's close with the last trading day's close.
+      <b>Calendar-Year %</b> is the conventional figure published elsewhere, measured from the previous
+      year's final close. Click any row to jump to that year's chart.</p>
+    </div>
+    <div class="controls">
+      <span class="seg-label">Window</span>
+      <div class="seg" id="windowSeg">
+        <button class="chip wide on" data-win="core">2016 → present</button>
+        <button class="chip wide" data-win="full">Full history</button>
+      </div>
+    </div>
+    <div class="neu tablewrap">
+      <table id="summaryTable">
+        <thead><tr>
+          <th>Year</th><th>First trading day</th><th>Starting close</th>
+          <th>Last trading day</th><th>Ending close</th>
+          <th>Annual return %</th><th>Calendar-year %</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="years">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">03</span><h2>Every year, its own chart</h2>
+      <p>Pick a year, or show them all. Hover the line for the exact date and close; drag across the
+      chart to zoom into a stretch of it, scroll to zoom, and shift-drag to pan.</p>
+    </div>
+    <div class="controls">
+      <div class="seg yearchips" id="yearChips"></div>
+      <div class="selwrap"><select id="yearSelect" aria-label="Select year"></select></div>
+    </div>
+    <div id="yearHost"></div>
+  </div>
+</section>
+
+<section id="returns">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">04</span><h2>Annual returns compared</h2>
+      <p>Each bar is one calendar year, measured with the primary formula. Values are labelled, so the
+      bars never rely on colour alone.</p>
+    </div>
+    <div class="neu chartbox sm" style="padding:16px 12px"><canvas id="returnsChart"></canvas></div>
+  </div>
+</section>
+
+<section id="range">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">05</span><h2>Any two dates</h2>
+      <p>Chart and measure any stretch of history you like — not just whole calendar years.</p>
+    </div>
+    <div class="controls">
+      <span class="seg-label">From</span><input type="date" id="dFrom">
+      <span class="seg-label">To</span><input type="date" id="dTo">
+      <div class="seg" id="presets">
+        <button class="chip" data-p="1m">1M</button>
+        <button class="chip" data-p="3m">3M</button>
+        <button class="chip" data-p="6m">6M</button>
+        <button class="chip" data-p="ytd">YTD</button>
+        <button class="chip" data-p="1y">1Y</button>
+        <button class="chip" data-p="3y">3Y</button>
+        <button class="chip" data-p="5y">5Y</button>
+        <button class="chip" data-p="max">MAX</button>
+      </div>
+    </div>
+    <div id="rangeNote" class="hint" style="margin:-10px 0 14px"></div>
+    <div class="neu yblock">
+      <div class="yhead">
+        <h3 id="rangeTitle">—</h3>
+        <span class="badge up" id="rangeBadge">—</span>
+        <span class="span" id="rangeSpan"></span>
+      </div>
+      <div class="neu-in chartbox"><canvas id="rangeChart"></canvas></div>
+      <div class="chartfoot">
+        <span class="hint"><span class="d-only">Drag to zoom · scroll to zoom · shift-drag to pan</span><span class="m-only">Pinch to zoom · tap the line for any day · drag to pan</span></span>
+        <button class="btn-reset" data-reset="rangeChart">Reset zoom</button>
+      </div>
+      <div id="rangeEvents"></div>
+      <div class="stats" id="rangeStats"></div>
+      <div id="rangeMoves"></div>
+    </div>
+  </div>
+</section>
+
+<section id="sim">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">06</span><h2>If I invested ₹10,000 at the start of each year</h2>
+      <p>A <b>simple price-return simulation</b>. Each year stands alone — ₹10,000 goes in on the first
+      trading day and comes out on the last. No dividends, no taxes, no brokerage, no inflation, and
+      nothing is carried from one year into the next.</p>
+    </div>
+    <div class="neu tablewrap">
+      <table id="simTable">
+        <thead><tr>
+          <th>Year</th><th>Invested</th><th>Ending value</th><th>Gain / loss</th><th>Return %</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="moves">
+  <div class="wrap">
+    <div class="shead">
+      <span class="snum">07</span><h2>The biggest single days</h2>
+      <p>Detected straight from the data — every session that moved more than 2.5% either way, ranked.
+      Where the driver is well documented it is named; where it isn't, the move is shown without a
+      guess attached.</p>
+    </div>
+    <div class="neu tablewrap">
+      <table id="movesTable">
+        <thead><tr><th>Date</th><th>Close</th><th>Change %</th><th>Points</th><th>What was happening</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="notes">
+  <div class="wrap">
+    <div class="shead"><span class="snum">08</span><h2>Source &amp; method</h2></div>
+    <div class="neu notes">
+      <h4>Data source</h4>
+      <p>Daily open / high / low / close for the NIFTY 50 price index, built from two sources and
+      reconciled against each other:</p>
+      <ul>
+        <li><b>NSE official archives</b> — <code>nsearchives.nseindia.com/content/indices/ind_close_all_&lt;DDMMYYYY&gt;.csv</code>,
+        the exchange's own end-of-day index file. Authoritative, but only published from 2013 onward.</li>
+        <li><b>Yahoo Finance</b> <code>^NSEI</code> daily chart API for the bulk series, which begins
+        <b>17 September 2007</b>.</li>
+      </ul>
+      <p>A stratified random sample of <b id="nVerified">195</b> trading days was checked against the
+      official NSE file and matched to the paisa on every OHLC value. <b id="nFilled">24</b> genuine
+      sessions absent from the bulk feed were recovered from the NSE archive, including the first
+      trading day of 2016, 2018 and 2019 — days that would otherwise have produced the wrong starting
+      price for those years.</p>
+
+      <div class="callout">
+        <b>Why the history starts in September 2007.</b> No source I can reach publishes reliable daily
+        NIFTY 50 closes before then — NSE's archive does not go back that far, and the index provider's
+        bulk endpoint is closed. Rather than fill the gap with estimates, the record simply begins where
+        the real data begins.
+      </div>
+
+      <h4>Calculation methodology</h4>
+      <ul>
+        <li><b>Annual return %</b> = <code>((Ending close − Starting close) ÷ Starting close) × 100</code>,
+        where <i>starting close</i> is the close of the year's <b>first actual trading day</b> and
+        <i>ending close</i> the close of its <b>last actual trading day</b>.</li>
+        <li><b>Calendar-year %</b> uses the <b>previous year's final close</b> as the base. This is how
+        published NIFTY annual-return tables are computed, which is why the two columns differ slightly.</li>
+        <li><b>Daily change %</b> is measured against the previous trading session's close, carried across
+        year boundaries, so the first day of each year has a real change figure.</li>
+        <li><b>Highest / lowest</b> are <b>closing</b> prices, matching what the line chart plots.</li>
+        <li><b>Max drawdown</b> is the deepest peak-to-trough fall in closing values inside the selected range.</li>
+        <li>Positive / negative / unchanged day counts use the same daily change figure.</li>
+      </ul>
+
+      <h4>A few honest caveats</h4>
+      <ul>
+        <li>Granularity is <b>one row per trading session</b>. Intraday or time-of-day history is not
+        available for a span this long from any source I can reach, so the date pickers work in whole
+        days.</li>
+        <li>A handful of <b>Saturdays and Sundays</b> appear in the data. These are real, officially
+        settled NSE sessions — Diwali Muhurat trading and Union Budget Saturdays. They are kept so the
+        record matches the exchange's own calendar.</li>
+        <li>Sessions before 2013 rest on the bulk feed alone; the NSE archive cannot corroborate them
+        because those files do not exist.</li>
+        <li>This is a <b>price index</b>. It excludes dividends, so it understates what a NIFTY 50
+        investor actually earned.</li>
+        <li>Nothing here is investment advice — it is a record of what already happened.</li>
+      </ul>
+
+      <h4>Last available date</h4>
+      <p class="mono" id="lastDateNote">—</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="rule"></div>
+    <div class="mono" id="footNote">—</div>
+  </div>
+</footer>
+
+<nav id="mnav" aria-label="Jump to section">
+  <button data-go="overview"><span class="ic" aria-hidden="true">◆</span>Stats</button>
+  <button data-go="summary"><span class="ic" aria-hidden="true">▦</span>Years</button>
+  <button data-go="years"><span class="ic" aria-hidden="true">▲</span>Charts</button>
+  <button data-go="range"><span class="ic" aria-hidden="true">◧</span>Range</button>
+  <button data-go="sim"><span class="ic" aria-hidden="true">₹</span>10k</button>
+</nav>
+
+<script>window.NIFTY_RAW_JSON = {"base":"2007-09-17","n":4673,"d":"0,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,4,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,2,2,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,2,3,1,1,2,3,1,1,2,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,3,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,2,1,4,2,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,4,1,1,4,1,1,1,1,3,2,1,1,4,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,5,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,4,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,2,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,3,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,3,3,1,1,1,1,4,1,2,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,4,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,4,1,1,1,1,3,1,1,1,1,3,3,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,4,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,2,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,2,2,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,4,1,1,1,1,2,1,1,1,1,3,1,1,1,1,3,2,1,1,4,1,1,4,1,1,2,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,6,1,1,1,3,1,2,1,3,1,1,1,4,1,1,1,1,3,2,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,1,2,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,4,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,1,1,5,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,3,1,3,1,1,1,1,3,1,1,1,1,2,2,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,2,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,4,1,1,1,1,4,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,2,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,2,1,1,3,1,1,1,1,4,1,1,1,2,2,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,1,2,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,4,1,1,4,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,1,3,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,4,1,1,4,1,1,1,1,3,1,2,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,5,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,4,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,2,1,4,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,2,1,2,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,4,1,1,1,1,3,1,1,2,3,1,2,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,1,2,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,4,1,1,1,3,1,1,2,4,1,1,4,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,2,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,4,1,1,1,2,1,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,2,1,4,1,1,1,1,3,2,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,2,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,4,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1,1,1,1,3,1","c":"9mt5,3z7,ed3,168,6y0,7ax,ih,4l,4mt,1ls,3o8,ay1,-5z,-1rc,-7rv,ion,8t8,6fo,-7gc,ion,-6j,-8e3,-g2m,-agy,-2ey,mcq,1qd,5m8,aaf,fpk,-2v7,2gm,-2n0,537,-6ke,-4ow,-bj,-6g8,-6at,61i,ipm,-1zo,-el,28,-9s3,-gyp,-37u,6vx,9hy,-2l7,-67w,1bd,9vz,7w1,-ih,6at,14u,1ig,-122,ajl,4sd,-7t4,-sw,-kvy,-2oe,ol,16n,gv8,6lx,tv,-50,4jm,fz,2pd,-2d,7dz,dc,ob,-181,-8vl,3bv,im,-a87,-aoq,-1qn,-g1i,-12b6,-nvq,ngq,-d43,qzy,-8fh,im,-8qg,-2br,dvg,ba9,1ko,-cg7,-elu,-zu,-kbj,-1g3,71c,l13,7sa,-208,au,-9qz,2vr,-695,6xv,5cn,-4l,1ae,-4r4,-kve,-6uj,4er,-bk4,280,51y,gy,-j60,9fg,-iq6,2b2,35r,2rq,knh,-3r5,3w,8mf,-g0e,e1,14p,1cc,-9m4,8t8,-3z7,2vw,-131,3gg,7ux,l9,5hi,62c,y6,-21m,-1rr,8mp,-1p9,861,-2a8,4t2,-2rv,-3o8,-pf,-45g,-7na,2bh,-48d,45v,7zi,39x,-42j,za,-744,-636,-5im,-16d,4in,-6ep,2oo,-a2i,-1tu,-a1y,71r,-3sj,-9sd,-3y3,5p0,17r,-1pt,49w,67m,-5g4,-613,-c3a,-69f,-5t6,4qz,4vk,-dts,-7ey,-b3g,f64,-cxk,6yp,12w,-375,d07,e6,-8qg,-pu,-ds4,-3fc,a2i,b6x,56t,67w,i9i,-3c5,-9e2,1k9,-az5,9jm,1hw,67w,-1ek,8am,14u,hi,fp,70i,-59b,-1sg,-7l7,-2wl,-1ww,3ny,-a6e,3d4,ly,5z,-3i4,-60y,b9k,-vj,bzj,-4c9,-7d5,a14,-11s,-5a5,-8hf,-4rt,-c03,5k,-555,2b2,fza,-1po,-7f3,2nf,-3wu,-9o2,-afk,5hn,2a3,-a7x,-gnv,bt,-767,-i16,g9f,25n,-dwp,-5by,-f1j,3ql,8ne,-d3j,-9ew,-rpn,-4m4,dc5,ejr,c7l,7kx,-bcr,-7w6,677,dit,-g68,-6yk,-2xu,-u0,-8zc,-3pr,-6bd,atq,154,-46p,7kx,7x,-5kk,-1xq,-3r,a5f,-5og,5dc,b4p,-mi,3c,4m9,4o7,-6qs,87k,1aj,-2y4,-5g9,-3zw,-4lk,50f,4f6,-1kj,6rc,5ri,-o1,-eug,-3no,-7pi,-267,6yz,-7lw,72v,1db,-3ts,-6z9,l9,-2px,75s,613,-1yz,3x9,-8cf,1bx,1h7,-1rw,4v5,5xc,14k,-og,-2ip,49m,-7pd,-60o,fp,10o,-42y,-73,27g,1sb,-1p4,-6vd,-410,1rc,-5aa,3cp,-3mk,3f2,7us,4h4,-1j0,2vh,yl,-a,a91,-3c,3it,7jy,21c,-a2i,3aw,31g,bmm,3ij,6nv,-2i,34n,7u3,-8uh,15e,-ka,-ws,-2p8,77g,4eh,-tv,-8b1,8m0,dw5,ly,-2ud,4jh,-4vk,-53m,9re,-3jd,-384,618,1e9q,-d2,-3pr,-4l0,24o,-2n,-9bp,can,4pl,8mp,68v,-cx,f5,38j,13l,-c44,9c9,81q,-1cr,-46u,-7o4,2lw,-ch1,-82z,4ss,-61n,wn,3jn,-3xy,ab9,16x,-7pd,3uc,m3,5tg,-jy7,2t9,-9id,5p,-5y1,-2ax,alj,9f6,-5u,b2r,9tm,-2k3,-5f0,9mt,3gg,af,-ms,-3wk,4gz,50k,5s7,-2du,11x,-8dt,-816,-3dj,2lm,-12h,bdq,-1xb,-etr,5h8,-500,4kv,5tb,8so,19z,1nq,kf,3en,-5f5,-2u3,-1b8,-154,6p9,7wq,1q3,p0,eb,s7,-1m7,6fy,546,jv,t6,3en,-3vl,1a4,-24o,3p2,5y6,-1j,-66s,1v8,-37p,19u,-4eh,8ex,4xn,-pz,2ki,-24y,-3x9,-5sc,nh,-20n,-9l0,-1l3,-5u0,-2zx,-bek,bc2,483,2d0,7w1,-1ae,9fl,-3yi,3km,4k6,bo,-kz,-52i,4w9,3xy,-104,1cw,-7x0,-4x8,70n,6w2,3h,nh,-1rc,-398,69p,-2rv,1qx,-1c7,-w8,-5lt,p0,-u,-465,-2pi,2kd,c8z,2lw,qj,-1fe,2fs,2ej,3iy,au,-1fy,-1ez,cx,-30c,1tf,203,-le,1qx,-3so,-az,-9ub,-4hj,-262,-by0,13b,154,1d1,-5dc,7un,-6oa,-9ry,37z,2hl,-2qh,5dh,-1x6,45g,4ht,-20x,-3b1,vy,11x,-vt,37,4tr,7b2,5hi,-lt,nh,2q2,-1qi,14z,1bn,a0,-mi,5c8,2lw,12w,1ay,-4g0,1ju,2pi,1o0,1lx,-348,-113,370,60e,-6o,o1,-5f0,4f6,-1p9,-1aj,-3t3,-uk,-4jr,21h,154,1vx,2oj,1ez,-136,-762,2zi,1u9,-49h,-5q9,-1tk,-2ml,-5m8,djn,-4fl,1ky,1pt,-6l8,-2lc,hi,-bb3,25n,-19p,zk,-al4,8jd,6m2,4w9,1iv,-8yi,3tx,6zt,1xg,-7ty,-3ma,10o,61i,357,61n,1wh,uk,37a,-y1,6zy,-2u3,ic,-73,-3z7,4z1,-5yv,4cj,-4pq,-13q,-3c,43n,-3p7,4av,4ag,2cv,1d1,-14a,-kk,163,-kp,-1f9,2f3,3ac,jv,-2cq,xc,-2jt,vj,-36q,4xx,ly,26m,-1ln,-lt,3ma,-1yp,-33e,-bj,2r1,-2lw,-bj,50k,4pl,-qj,zp,-2yo,-3ar,177,-5c8,ir,-109,5cx,13q,-ir,7iz,235,ap,2hg,997,2qr,51o,-2hl,4c9,7da,27g,-1e5,-2fd,4j7,1c7,-h3,-2y4,2zd,8r5,18l,-11x,34x,-53r,-1at,2i0,-3gv,b18,-4d3,-8um,10y,-3r5,-3hk,97o,-2qh,32f,-1u4,-5cn,-1xb,2bc,7pd,41,37a,9cy,-nw,26r,-1zt,-6a9,-9gk,3ur,-a96,s2,-8de,98i,-5t1,-5bo,-53c,-3os,60t,2iu,7ks,3x4,-1gi,-1j,-17m,-5md,-al4,70d,3vq,2t9,-3zw,4ct,-4q,44w,-195,-c8,2fs,-11i,-5u,4yr,37a,2ip,1s6,-v9,-54v,-2fn,-b31,-axr,-ob,8f7,-8lb,-7if,k,5ci,-2jo,1l3,-15y,3lv,-4b5,-6eu,-73z,-hd,-6ue,154,7b7,-a3w,p,-6ft,-4jw,-253,6hw,b9k,1xg,1y,4zv,-6r2,4lp,-3t8,-2gh,-dh5,35h,2ai,el5,12m,73,-5u0,4g5,sc,-2to,-3rz,6n1,-6bd,4qu,-4z6,-5mn,-ov,3se,54g,393,a69,2jo,3se,3yi,3k2,-le,6cw,4g,-1eu,-gt,-3de,-4ce,9pg,-6pj,-7d5,wd,8k2,2jt,-sc,-gy,-2nu,-3ql,-2rv,-3pw,-ahx,-262,-5yq,72g,-z,-rd,1u4,-636,4is,-3j3,-4mt,-1ez,ku,4ht,-7p8,n2,-3ji,4w4,4x3,-8c,96a,-37p,-2lc,16i,1uy,-29e,-g4,-2px,-8c,1d6,-438,-3wz,-2cb,-8de,1dv,6t,37u,bo5,49r,1fy,497,3mf,-1k4,1sq,-1f4,-ih,7zi,-59q,-3fr,-6xv,4kq,-c3,-131,3l6,-3l6,-1yp,74j,3kr,-84x,-25x,-4k1,-fz,2oo,-4nd,-3zr,-5ms,-9av,-75n,-3it,6sv,-1r2,-51j,-2v7,1ls,-8od,-7lm,43n,3v6,-4mo,-3sy,-730,d98,6a4,30c,-1rc,3mu,4nn,27g,-78k,-8ox,-g9,5iw,4vf,nr,-41a,8cp,-jb,-g68,-4ba,-2hv,ahd,-1yf,5d7,-5kk,-78f,-5yv,-1lx,ajv,72b,-el,9nd,-1nv,479,-131,-68b,7ud,-3n9,-38j,3qg,771,d1q,-2mq,-5ap,1e,ka,1f9,eb,-59q,-410,-1ky,-65t,-2xp,-7du,-28f,-9u1,2mg,-866,a0,awd,-3kc,22v,834,8qq,-uk,1t5,-96f,-5xr,-7vm,2s0,-2vr,-1ay,-7b7,-2yy,-5be,bhr,352,-1j5,2te,-3g6,-4lf,-1oz,avo,-17h,u,bj,-ve,88j,vo,-2ai,2oj,ly,77g,-vy,4tw,2bw,-6j,69a,2dz,3kw,-924,8mz,2t9,2n0,4bf,2rg,-21m,2jo,3es,-2df,nw,1zt,8xy,-rs,39n,3b1,-7us,-1p9,-460,-bfe,79y,qy,-3i9,1ig,-63g,-4gz,-5f,8q6,208,5eb,2nk,-6fo,-4tw,-4p1,1dg,6ya,-aj6,3u7,-78z,4jm,-3qg,-186,906,1q3,34s,-2qw,-6tu,pk,-1aj,3uw,-5cs,1g3,4we,sm,2i0,-37f,-6yp,1p9,-1ld,-104,4g,4fv,-p0,-3wz,-7u3,23u,-8t8,-1xv,-pa,-2u8,-1mm,2p8,-6iv,x7,1n1,-2dz,-1x1,6m7,-2s,519,cd,-31b,-21m,-6dl,i7,163,abo,41z,1fy,-13l,4ro,ff,-55a,6i6,-5rs,320,1ae,3fh,-1gn,-2f8,h3,1mm,k5,a0f,-u,pz,14k,1wr,-sr,-384,5f0,-30h,-5hd,-m8,-2bc,-c8,1t5,21c,-2wg,-6q3,sh,-1fo,-550,4dx,7pn,294,vy,-zf,-xh,55p,46f,3m,-15t,-73,24e,2i5,-1cc,9b,47y,-mn,6y,-27l,-2t9,-4th,23p,-4d3,-d7,1k9,-3q6,za,802,1nb,21r,35w,c3,aza,2hv,-rn,-3j8,aka,-1nv,by,-t1,-12r,45g,172,yl,4cj,-34x,-5h3,27g,-41p,4ba,-2gw,v4,-311,y1,4id,-2np,2je,-1zj,12m,-32a,-582,1ok,1yf,429,i2,1k4,2r6,-1nb,-41u,-73,-42e,-4e7,-7d,f,3c5,zz,-37,pu,72b,7iz,48d,-oq,1eu,v9,2cg,-1ta,46,-s2,-u0,-2te,262,-1oa,302,2j4,-10o,-5au,md,3uh,-2qm,2y9,-91,3j3,39s,195,ih,-253,10y,-2bw,-7x,-1c7,5m3,2if,-483,2vr,1y0,1dq,-2lw,g4,-2p3,49m,f,-1x6,g9,-1mc,-2rl,-wd,-2cb,6e,-1ko,-2q2,-fp,1wh,t1,-2s0,-qj,u0,37a,9b,-708,-5f,cd,-77g,2qr,-80h,221,-1mw,6m7,2nf,3g6,6cw,-9b,-26h,-4uq,4gf,-2sz,-2vr,-6w2,-3z7,-2r1,-kk,-1cm,lj,35r,1op,3de,-5sw,-7kn,-1nq,-sm,-3ox,4wo,2q2,-51t,32p,9av,-p,7a8,3yi,6y,64k,-3gl,2ip,20i,5c3,-49r,235,5le,1zj,-1h7,3fw,-8ti,15j,bof,1sb,1cc,-2cg,-3aw,-1ig,-9u1,19u,7oo,262,-jb,1iv,-anm,-3ll,-1j5,c8,-6t,-348,-8c,-6vs,-27g,-4pq,8fm,37p,-2t9,o1,-cu3,wn,-5z0,1gd,-1ko,785,cc1,4dd,-36q,-6op,53h,2dz,-4cj,3nt,-39i,94w,5pa,1ok,-5tv,1e5,4zv,-ol,78,3js,-6qi,-6ek,-1n6,-47j,-5ws,-109,-13b,-3ur,ku,-b1n,-1sb,3lb,3lv,6pe,3bg,-i39,-76m,-10y,-7mq,866,4vu,d7,-el5,-6t,9kl,4ub,63b,-g5e,889,b6d,6qx,goz,19k,-4th,-a,-rx,qt,3st,goa,-7zd,-9fv,7i,-1fo,nc,-3s9,-7jy,3gb,a05,-6o,-37,1pt,63l,11i,5t1,19u,-1tp,-3c0,b2m,17c,-5z,-1vx,-12w,-1i1,-3do,98s,2dk,3nt,md,s7,-4yc,-2xk,-25i,-3l6,-4s3,-4or,-271,54v,a91,13v,-67h,-9k1,-a0,992,-4c9,-5k,2oj,6i1,37z,-18g,-35m,66n,1g8,80w,-2e9,-1xb,-5gt,-5ap,-122,-17h,60y,-3wa,8aw,sh,-18q,t6,2oy,-1r2,zu,-6j,-67m,-rs,-1iq,-294,yb,-hd,8m,7te,-2du,63l,-5k,-4f1,39i,rd,1xv,im,-636,-a3m,-qo,-go,-3lb,17w,-6rm,-2i,1nq,12m,22q,-r3,pp,1n6,-6ea,3n9,1xb,45g,1z9,-4qa,4xs,2d5,12r,2zn,2xz,-4a6,5wi,2da,5le,9om,tg,-1yf,dw,-1u4,uu,yl,kk,-35r,s2,4q,6u4,hd,wd,343,46f,n2,1at,2fi,-19p,-37z,1y,7sz,k,-1ju,-3c0,-4gk,816,2y9,-6e,1yp,-4h9,-1nq,-3js,-1gd,-4g,cn,18b,-4ub,ka,fcn,bzt,7ai,0,140,65t,4o7,x7,-1qs,1ta,6zy,-md,-361,wd,-794,-fu,a87,447,-11s,5jl,8fm,5hs,50,-2a3,1s1,-8bg,-nr,7kn,-5o6,-1cm,-299,-1ea,6p9,-uf,-5v9,17c,7wv,1sv,6z9,-sr,2u8,2qr,-cnf,-2y4,-1bx,-8cf,-f5,5le,7jj,18l,1t5,1ke,6gd,25i,2ot,-33j,-37z,3am,-5eq,-95q,695,4uq,-5qy,-1rc,-686,4fg,7su,yq,40v,6db,1sl,-1po,17w,1pe,-j6,-4b,2ey,1eu,5nr,49r,2fn,-1ft,-pa,6pt,-1m7,-4jh,-nc,1j0,-4we,-8f2,3ac,aqt,im,1x1,-9xn,-163,-6zj,4ec,-rn,ge,-1hh,-76r,-qy,93d,-7rg,1vi,-1k9,-8xo,2fi,7oy,3qb,59b,1ft,-1rh,2rq,4ul,62r,bt0,5f,13b,-3m,k5,1f4,1ld,-1yp,2h1,35h,-dh,-3d4,1ig,5tl,42o,-569,z5,1f9,799,-2hv,-2eo,zz,22b,-20i,-7px,-7iz,15j,-4ub,-5b4,-ci,-bq8,-2x0,9zq,532,7mg,-4ec,-762,21w,3io,5f,2np,3m,8ll,-1bd,-jdd,-1y5,a82,3um,2yy,-1tk,-1op,gpo,1il,2ui,b6i,2m6,2gm,5q4,5s2,ak,2xp,-b2h,-vy,-35h,-2j9,-xc,-3wp,-ae6,30w,4rt,6hr,78z,ap,4lz,20s,-4re,-62h,jv,eb,-6fo,cej,4f1,48i,31q,-5og,15y,-dys,-3g6,-xm,5v9,-9w9,-14k,6yf,-2vw,-3yd,-4x3,-1jk,-m3,-xr,-ek1,-23,bn6,-3m,7cl,5ol,14,46a,4xi,5p,451,-6gs,-3cu,-7rq,-c6m,-5ff,40b,-2f8,-76h,-721,5jg,-3jd,-4ht,blx,-jv,-hks,-32a,acs,abj,-fau,8de,-v9,2xz,8l6,-m8,4g0,-69,2xf,-6ue,-2du,-d7,-17c,8uh,-p,-f73,-7tj,-cd,-18b,-5fz,-1of,7vh,-c9y,1cr,2e4,2ks,3ex,6ep,3vv,9vz,271,-1li,2v7,-1ay,-4u6,3v6,6iv,-mn,334,2vh,-vj,-bef,-2nu,2gw,7na,-ff,5dm,6i1,50,-hs,-5pk,811,-3de,-59l,-cdz,-1uo,2xp,3lv,8kh,sc,-20n,3xt,1li,-1ut,-30c,-4vp,-8pm,hs,cjy,-36l,-tv,27g,-9g0,-5m8,-11vr,5j6,-6ut,c4e,438,-2d5,-eb5,-5b9,86g,-cyj,-7fd,9zl,a23,-2cq,3c,6ef,-3bv,5el,6dv,-dc,-cqm,2mb,1qn,-5m8,3o8,85c,5k,czs,2lc,1w2,-3ph,4nn,-3k2,-x2,-1u4,5iw,4ix,2ui,-118,-rn,3dj,-2oy,-24t,-4re,-4l5,-3jn,-15o,ri,-1ky,-6jf,-37,-30m,-a69,37p,-4ub,3f7,2dz,-85r,8k7,12c,-ka,-1d1,410,4jm,-kp,1il,-1tf,-56o,-6ch,-19u,-4wy,-6vs,5go,-5md,320,3x9,3uw,77l,-6cw,5le,-3qb,65t,-dm,4y2,ak,-2iu,3v6,1at,-d9i,-ih,-3d9,-dbq,2jt,-2w6,-44r,40q,-1z4,-7n0,-6p4,6hm,-9pg,-2ia,b8l,122,4g,-10e,apu,-l4,-7qw,-78f,398,6ke,-7ux,-6vd,-6d6,-igv,cs,e1k,-8um,4n8,6fe,1gs,1u4,-9n8,-70d,-3pm,4kb,-3am,i5h,bb3,88j,r3,-5,3l6,-3it,1ut,27b,-613,2xz,12c,730,7pi,tl,4g,-7to,-1ea,anw,8w,-1yf,3j3,-c08,uz,-58m,ob,8ys,2wb,ax2,4yh,5,-7i,-zf,-3ex,8aw,1bx,-a8h,73,-3dy,-4jm,-34d,28f,-5p,a8c,1of,-307,3z7,-6li,3jd,2bc,-1l8,-6oz,-2lm,-1ft,1dg,ect,aeb,6po,1op,-1f4,1j5,30c,55,-1iv,51o,ic,-5cx,-2l7,-4l5,-4v,7jj,-52x,29t,59q,-1fo,-190,55f,-e15,gy,2k3,5vj,6gn,34s,39n,-2oj,5f,-14u,b5y,43n,-4b,3ie,-1tk,-2iu,1j5,2vm,-4av,2ee,7ad,-3h0,1xv,3wa,-258,-5f,-11x,-60t,hd,a6t,26c,-2jy,-7xz,1at,668,-2a8,-1fe,3so,-hn,-2wv,9l,1d6,-4he,-1il,2oy,aka,389,-w3,2p8,aaf,-1xl,2nz,-6mc,-bnq,uk,18b,2vm,27b,-2ia,3h,6yu,-2rq,-8de,-1a9,2zn,-bvi,1ja,9sn,2e9,-1y0,-2nk,-x7,v4,-ag9,rx,-4v0,c5i,-1g8,33y,-hn,186,-1d1,-5v9,0,1r7,-y6,1j,-8nt,-28p,-3y8,4vu,3l6,-8lv,78f,-hpd,-eht,8r,-2fx,-g9,-b6s,5nc,2e4,-58c,bhc,z0,16d,6cr,-2fs,-86q,38j,140,-366,b68,15e,-70n,3xo,-31b,-285,-13b,-2pi,-1oz,-1mm,-6cc,ih,-5za,9m4,5k,5az,6cc,-hi,zf,-4v,6fe,-2bc,-lj,41z,73p,21r,-j1,yl,-154,1gs,1ea,-6m7,393,6i6,9sn,2yy,-nm,-5ih,byu,1dl,im,4my,-2iz,23,pz,163,vy,-zf,-57s,442,3de,4fq,27l,1gx,z0,-3aw,-1bi,53w,-3jx,-64,532,-19z,-1qs,7i,kz,brh,-64,5be,hn,-2k8,-ev,-70x,4b5,1oa,-4ug,4ag,3bg,2b7,0,4y2,23u,-8w,-4wt,-1at,4ab,-2l7,-429,-vy,-2mv,-4l,2je,-1b8,7lr,6u9,3hp,-qy,-2xu,r3,-55,3p7,-5r8,27v,7s,6z9,15y,-1nq,3fm,55p,11i,-7fi,-4b,sr,-40q,-1z4,big,6l3,r8,1il,-96,-eb,2vw,1o0,-2xf,22b,-1a9,1mc,-401,-qe,v9,-33e,rs,5d2,-b9,-1ja,-a0,-48x,-4wj,-1jz,zp,1ao,79e,-4q,1vi,2un,-ob,84d,15o,2bh,5u0,-ev,2a8,-6uo,5l9,-212,38j,3y3,-55,4bu,-a,-gt,4tw,2wb,-2k3,-58h,42j,-p0,-631,-5fu,-6rw,-8g1,6fj,7yj,j1,-55f,-6ep,v4,6pj,cn,4av,-90b,6tf,2l2,4cy,-4qz,31b,-2s0,122,dm,5hx,6po,-127,ka,-3c,582,-ff,-hs,-1hh,-c5i,-730,-32,-ah3,2k8,1il,5gy,49w,-20s,70s,p5,26c,-2hb,8m0,5hd,4w4,a0,-1tk,-4ym,2ye,1rh,6rh,3ql,-1ln,34s,-26r,848,-1ae,27q,-1y,-7ud,-3mk,g4,zk,-7gw,-2yj,-5af,7gm,5b9,163,267,16s,hx,35r,rd,-29e,-ov,-aeb,-82z,gj,-qe,-5pz,9gk,7mv,4d8,-6c2,-3n4,4kb,69f,4a6,5qt,-1gs,-au,42e,2yy,-357,-zp,42o,-7cb,ih,2s,4r4,465,4zv,118,-dc,1gs,2bh,4ni,-366,6sq,271,5zu,5im,92e,6e,-19f,4or,-68b,-1oz,-u0,-jry,-799,-czi,-1nv,7q7,-9em,6jk,-2zx,3fw,-76w,-5pa,-1e0,2ux,-14z,8cz,72b,-26m,-4qp,-2nu,-7oe,-8gg,-7c1,6tp,-17w,f0f,f5,-18b,-3wz,-cqc,-7sa,2bm,2du,-34i,-906,a8c,44m,-5fp,7ki,2k8,-8zw,f6j,hx,3on,1rm,15e,37a,1oz,3on,1kj,-1qi,30m,-3h,1ld,2ad,-3do,3n9,5qy,3mp,-1n6,-2yo,-4qk,7i5,6e,1ue,-1xv,6xv,a,-d7,-4or,-4i8,-6nq,-65e,1jk,-87f,6fy,71m,6fy,-49r,-1gn,9ec,-32z,-582,-2q7,726,6gi,-1y,1hm,4ba,12h,-3r5,qt,-1dl,-6wc,4r4,-2dz,68b,-4l0,im,-7jj,-6cm,9ns,-4ec,3ac,5eg,-1jz,1rm,66x,7a3,2x,5s2,-by,-6bx,5hs,-24o,-1sv,43i,5r3,3tn,-6e,2q2,8kh,36g,2un,-sm,-7ty,8yi,212,6j,4o7,1li,-36g,-5ov,64f,-3v1,6m2,690,1h7,wx,-1z9,ael,3lb,-3lg,-15y,aa,-7kn,-4sd,-3cf,4mj,410,-bng,-bmc,6cw,b7m,-alt,-7ml,-3fr,-71h,-dk2,7px,-11x,-5vt,-3mu,609,-bkt,-jzg,-ltk,2fs,-3mk,c9t,-he9,icp,334,5kp,-a5u,-bja,-4hy,-7lh,60j,-7pd,-7bm,h1h,-41p,eis,-h3,dbb,-28k,go,5a0,-10o,-7y4,7qm,-h8,348,51y,69k,-89s,-4bz,-5nm,7ux,4ec,3c5,a0p,1e5,jg,-13l,-6ok,-e0v,753,-fu5,4om,ejh,45v,12m,6ea,1kj,4is,-17c,-f96,-6ze,54b,3ur,66i,7d,3o3,-92o,-9a1,492,3fh,2cb,438,-2l7,-221,-4fb,big,9q,15e,4v,48i,-30m,-71h,1eu,-5cd,-96k,-pz,-14,dtn,4u6,1fo,1pe,9vu,jb,-9pg,-488,-4fg,-2wv,-3o8,-1o5,-6ft,-2to,a46,474,50,6tp,-3gg,-27l,-13b,5h8,9kb,523,eg,-1rc,a8h,a9v,34i,4b,6g8,2q7,5f0,-vj,-4y7,-7x5,9yc,-2y4,9n3,45q,3hp,3ed,-5cd,-3jn,58r,-4qp,57d,-6rh,yg,3lv,3ma,7gw,-2nf,-c7v,-1fe,bl8,-6ib,8ph,-i2,-1t0,-yq,-8so,-7qr,-aol,-4g5,-1rm,-a32,5p5,-50p,7q2,bkt,whq,-96z,280,-68l,efl,681,b4,-57x,6jk,-1s6,csf,-55u,-dq6,22q,40l,3b6,-4l0,lt,-703,-bnv,1hr,-5,atq,-8b1,-1vx,7gw,3xy,-go,-42e,5x7,3g6,hx,2bc,-ago,-jhj,-7i,-4ec,6hc,-2cg,2rl,5q9,1x6,-6zo,-dph,-5mx,-163,-4lz,-1h7,2hb,-7c6,-80c,2ik,-anc,1c7,-aeb,6lx,-75n,dnj,5yg,-e6k,7zn,1f4,gy,-2ui,-7l2,-don,6sg,hmq,3ny,-4kl,-7jo,5s7,-hdz,3lv,91,7l2,4dx,2ip,-42y,76m,-5l4,-ece,1s1,-ahd,17xo,p5k,-xc,-bf4,a3w,-4jc,-2xf,-8u7,-3ji,-aqt,-3qb,ef6,-62r,5fu,2sa,6q3,2r6,9fv,5tq,-5o6,17r,-1nq,3m,3c5,cbm,4f1,2kn,10j,3wu,-1uy,3rp,3js,-80m,eq,-5ms,2fx,1sv,-uf,4ag,4jw,-2da,-460,can,-2s5,4v0,3w5,-7c6,-lt,-460,3s4,-1ww,-7h6,18g,-686,447,4r9,8v6,-2iz,8kh,4dd,2xp,xm,-p5,-3pw,-6sg,979,rx,-6qs,131,7oy,-4ab,-i0w,4me,-24o,epb,35m,5m3,2iz,-1gs,xw,-8r,-9v0,-47y,-4uv,5o1,58m,-9z1,-4vk,5oq,-78a,-5oq,-n61,3jx,kyv,8g6,3rk,-320,-55p,5w8,776,-21r,-4q0,-57x,-442,aak,-3h5,-jeh,-2fi,-97o,-3hk,-xar,-5bo,d5r,-41a,1e0,-lkj,-15ig,jb,-1uzt,s61,-1mh0,-hrv,-12g1,-fuf,116w,-2flc,eq0,13vk,oyw,1g8,-t97,ofl,-qjf,-d48,1ins,-3cp,s0r,-93x,-5af,57i,l4z,-dm,-lmw,fvt,9ro,-cb2,9va,7lw,db1,nnj,-17pc,-6s6,51e,-5jl,41p,-y6,-3ah,efg,-ikw,-ge,-o74,4b5,egp,32a,-564,-sc,m26,dij,6yk,iyx,bsv,6d1,-2i5,8q1,1ya,-9bk,5d2,-giv,5gy,-ca8,7qm,-2j9,g8q,bsb,55k,cbw,-csa,-19k,79e,-5g4,-sm,9vf,9dx,4al,c26,2s0,-78u,8b6,-3i4,2o9,-f2n,u5,9e7,chb,9aq,at1,-2ad,6e5,-1n6,-4t7,d0r,-7je,-7rq,-27q,-e15,fpp,hs,7lm,12m,4bu,41f,-136,-m3,-9f1,5au,ao1,1s1,-7f8,4l0,7bh,g4,5yv,qt,6tf,-k2i,6dv,4zv,-kz,-exs,1mw,-2wq,-31b,d7p,168,-1vs,6b3,6dv,-6tp,-uz,-jmo,-7h6,-1ok,-p6e,ivq,doi,-eb,1xv,d2k,6o0,c9t,5wd,7dz,654,1aj,9v,2tj,-mfi,6c2,8j8,1tz,35h,-36g,2m6,-cjo,9dx,-cbw,-4jc,-26w,22b,b4z,7bw,gcc,b1x,f8m,d4d,93x,-4i3,28z,4ni,78z,4xx,-cun,6qn,578,9xi,-f6j,9x8,-1e5,at6,d2,1jz,9m9,7i0,2vc,ai7,-3x4,2qr,3f2,qy,8v1,4h4,1j5,-xcf,an2,aeg,bfj,9kb,4l0,3t3,-k,2u3,8ts,550,-43x,-oq,g72,aly,62m,3w,2df,-chq,-brc,ii9,9j7,-46z,-gut,-a9g,-kxw,-bkj,-e47,1dw4,sah,ayq,85m,27g,es3,-i2,-7s,55k,-rs,bok,-3h,-82f,-6xv,-al4,-nm5,2h6,l5o,8wf,-17uc,hxk,c5n,p6y,-cpx,-b09,1ea,az0,5w8,-b3l,-7tt,-1gx,-elf,-cm1,ed3,-l4,61n,-kh3,-hbm,e2o,q2c,-bww,dmp,-hpn,3iy,agj,483,-307,-14fp,eyw,5wx,2t4,-jxs,-4v5,8gv,-500,b31,cyt,gbi,2cb,-kcs,8h,-amd,9d3,893,7l7,974,-72g,-bwh,-1fy,ixj,e9r,-60j,-9kq,krx,1q8,tv,76c,2t4,7jo,bcr,-m3,3r,8t3,-1ju,6a4,-w3,-82z,7wg,4r4,yq,4fg,-7ui,-5vj,-md,4vf,20x,-6mc,7zi,5e6,-3it,-541,-22v,-37a,398,8nj,-18q,4qk,-bpj,-2xu,7s,98n,37k,5f5,-28,-d70,-9a6,et7,2gw,-2fs,-60o,-2ux,5bt,-16s,9f6,iy8,9vp,2rg,-4co,1jp,1op,5z,6c7,cpi,2mb,3z7,-3j3,-94r,3jn,9vz,rx,69,59q,hfd,fir,-4bf,c6m,6wh,46k,-17m,-nw,17r,-12r,1wm,ard,8hp,-3f7,-eix,cqm,-16n,lbi,2c1,5a,-87u,-2vm,-76r,-6n6,ca8,a41,-dlq,b4z,839,3wz,3js,d3o,dn4,aoq,-4hy,-bqn,-6tu,-4vk,t6,b18,-4fl,-rai,-ebk,jwo,-352,-4lz,6rc,bpj,-1vi,-235,-b2w,hoj,im,-8i9,-7rb,-abt,-qvd,6p4,-6ta,9co,-13c4,24e,-5gj,e6a,i43,-ftb,-ly5,kel,mm1,3mu,-ff,-b1d,-3cf,-7zi,230,-kb4,-smk,c35,e8s,91f,-5b9,6d6,bcc,-1il,-qt,bky,kyl,dur,99c,-du7,55k,epg,41p,c30,3i9,-5p,41f,-f1t,-dh5,-dzw,-ash,-1045,9xx,-cy4,-ms,icu,iac,fob,-gyk,-3dy,-ncu,43n,f7d,ayl,-hty,-151n,13bp,-2c1,-1cw,-26m,-5dh,-8tx,-28f,-1qwq,vo5,age,-ei3,-8bq,-jhy,-tho,bli,ply,j97,2qr,il1,-g2m,o3n,o1u,-d2p,f9q,-5e1,-1rm,-5dr,5bo,7yy,dcf,-2l2,fve,tjr,-7eo,-bjz,-cyy,b68,-8fw,-b5t,-47t,-naw,-gl8,dq6,jr9,-h0x,-gtk,j1p,-cj4,fy1,-azu,-2kx,-u7i,e1,-kxw,-8fw,-4ro,-5mn,-rpi,-1zt,4n3,w6c,-1gs,-x8y,z8r,-3yx,-6wr,-7nz,b4z,e2e,nu7,-5xh,-4ro,84d,-3de,-14z,-btk,-4my,9eh,-lbi,-wz8,-39i,-32z,-pkz,-56e,4dd,m9t,-hee,b27,b04,a8w,1ef,-3xy,-1gd,-26c,6fe,-1w2,dt3,b1i,6rm,-cs,-c62,-72l,-25s,8j3,hoy,4sd,dwu,6ig,8t8,-6tp,-bcr,c6r,m7g,hn5,e10,f0,3am,-h3,172,9ug,qt,9l5,30r,9t2,96k,y1,-fa5,-knr,6p4,249,-6d6,2t9,-izc,yg0,-gpe,-9b,9qz,-sc,-2eo,dgb,2o4,7y4,abe,-546,-9qz,-qqn,71w,eyw,-7jy,-6tz,-nc5,-o01,-oq,-bhc,-34i,lbd,-fz0,tuv,4fq,-1bn,-5ol,-jv5,at1,-8fh,d7z,9qa,dij,1ya,3zm,yb,bx1,-5qo,67w,3uh,he4,aa0,-4tr,-2br,4z1,6lx,-3j8,-9xs,ot2,-1l3,5q9,hd,-52n,-2sp,-bea,6i1,1s1,gqd,27l,3uw,49m,atq,46f,-8zc,dr,-4hy,-6ch,3rp,-8p7,1j,8jx,41a,-ixo,-b9a,bop,-2pn,-ed8,-5jb,-oqf,g18,92y,-r8,5aa,-6m2,73z,2pi,-emo,-3x4,-a8m,inj,-efl,-1f9,-2w6,7lc,-4rj,c85,8n9,-4fq,-66s,70i,-p,-hgr,-m6w,3fw,10o,-3jd,-ge,ist,-6wh,-3bq,bl8,1of,-2un,-6ls,c9j,6mw,1jk,-72l,-7oo,-1dq,-l0o,-3bl,-3i9,-5n2,-6uj,bc7,-9yc,l0t,91a,3bb,-cps,-dmu,-jyc,-8kc,-5hn,11d,8tx,-8m5,96u,3fc,-5sc,-a69,34x,-2mg,9yc,lj5,2ye,c9o,38y,1x6,7kx,6ya,17c,-9cj,-3lq,-370,fu,-14,97j,1zt,3f7,7tt,bkj,6dl,-4gk,csz,-eew,f2s,4b,3sj,-1ea,1dg,6hh,-8o3,-82z,-3zw,5o1,8kc,2lc,-4tw,2rb,dr0,7nu,2ps,-7o9,-3ll,3kr,4lz,eb,9tw,-735,-5hn,2xu,8uh,32f,-58c,an2,-5fz,4q5,33j,-6ls,-85r,1ze,9qk,bxq,gqn,aau,54l,qe,7mg,-crq,1uy,6fy,-492,29t,bmr,bc7,2x0,6h2,b9k,-i2f,-5lt,mx,7je,-94w,-12h,8bb,-1k9,-fz0,-b6i,afz,672,-21h,4re,-6wh,-8uw,hd,2cl,-7p3,-492,6ft,7x,3o3,-4f6,-9bu,33t,2to,dc,-785,e06,77q,3k2,2sf,8y8,762,dm0,-8r,5xc,2jy,6vx,-4k1,-hw6,-c9t,-596,u,-rd,3zr,-evu,8ur,-8gb,-75d,8gl,8bb,-aw3,dp2,9di,-1c7,-3bb,-1hm,65j,-au0,-3kw,-6bx,-k4q,-cbc,-kfu,ens,785,-4qa,-6z9,b4a,7if,dz7,-e1,2u8,-3pw,2bh,7qc,-6bs,hw6,6xb,-2ks,-2x0,6wc,271,-rd,-ka,7bw,fyq,2tj,aeb,wbm,czi,6dg,-2tj,59l,24y,-6zy,1jf,js3,l4z,-2xk,2np,-ndj,83e,7a3,73f,ggs,9kb,-3ne,t6,-5ve,-bgd,awd,410,-f9g,2gh,5p5,276,j33,fnm,-50z,-zir,-8gq,ccv,-tlk,gln,-7tj,tpg,-gmm,fpk,-26h,c2b,-6c2,c62,32,-gef,4zb,-cud,9tc,7gw,5ge,a0z,6aj,5ri,-ay6,cj4,-d7,-6zt,5vy,-j2o,2fx,rgr,55p,-3sy,933,1i6,-cey,8h,-q2w,bhr,-9ii,2hv,-idt,1o5,dc5,6jk,-73p,96f,fol,afa,-o6,-1ft,668,-2n,brw,-1tf,8kh,-i34,-j1u,-9m4,-bqd,bnv,em4,2fs,2nk,cyj,-bls,h8p,-2z3,3cf,-dar,-2k3,-atg,0,-qmc,7je,3rp,8s4,-1c2,foq,4sx,4uv,5az,sjd,-tb,-1wh,-3f2,-e5l,-go5,38t,1kko,-2yfo,1ks1,fih,1063,-2dz,fp,4he,5uz,55a,74e,-38e,3xo,-532,2u3,e5l,bdq,dk2,-2m6,a4v,-1ea,cjt,17h,1oa,-96,8ox,-8e3,-nm,ed8,6iv,212,eht,-ktv,-1o5,-2bw,-523,-kk,x2z,3h,1mw,78p,4lz,-mmg,-1f36,-4v5,nj3,-dxe,jbu,-1ky,-g1s,d7,unw,2fi,9qk,5i7,36q,wd,egp,jv,2o4,7oo,6h7,3aw,37,-69f,-44w,-mlr,6i1,82u,-9gp,10at,-2i0,23p,2oo,-35w,2y9,sy3,bfe,3r,4x3,gcm,-2v2,-sei,-12r,-166w,-i66,-gvx,grw,-2eo,19u,-2n0,cmq,-5g4,-6n1,-h35,81g,-5mn,-nuc,-2to,-2sa,-gv8,c7v,9uq,-9q0,-age,7n0,-nuc,gtf,kw3,-lyu,-3y3,-j6,-jw9,-p14,-217,-636,4zq,-d0c,1707,oa1,-244,67c,-ru3,gqn,b6n,dz2,sm,ilb,-2d0,-4jc,-ov,2g7,-76m,gy0,-7px,-pmx,-akz,-j2j,-s3o,csz,-1zo,1qn,4vk,-d02,-a,7ki,ye7,-e6u,-tzq,735,-1gn,-cj9,-7bw,-qnv,6ya,2v7,7lw,-8do,ax7,-op6,a32,3uw,-8qb,-kap,9vu,fvt,6o0,jz6,-20x,-9ce,t6k,-3bb,-767,-3ck,-drf,-nwk,-21r,-12h,-7vr,2c1,-13g,-yg,-1iv,-91p,-ipr,-g4,-6y,-wfn,-f0,-2tt,jnd,g04,lo,-744,2wg,-244,-5nm,8lv,p4b,5nm,lu9,cbr,nrf,sm,-e10,83y,-5lo,-rad,cux,-6ch,-qo5,-1lbh,svl,-ajq,x4s,12kw,8dt,vz9,l4u,37u,ch6,-6ch,-fzz,mb7,kp,-4v,yq,8tx,-6aj,2oo,-auk,-kic,1yqe,-qq3,6tz,uhs,-39i,-5qj,-k6j,9zv,-fpz,is9,bf4,-dhz,-5ov,69f,-6ea,-2mq,-dfm,5zu,a32,jgf,7q7,2x,2v7,-jjc,-d34,hl2,-76m,-36v,-1g8,omj,-aua,5l9,fgo,nh5,6uo,-9bf,1wr,-6tk,-3pm,4aq,u,4q0,-3kw,-9bp,-fuk,-57n,8ra,195,-7rg,-b1d,9fq,-2as,c9o,-c6c,-hda,-c1m,atg,2mb,-6ou,-fnw,c58,-5nc,-5tb,1oz,-hyt,h3z,-7j9,a6j,x7,iyd,802,5e6,2k8,-ghh,7j9,-jqa,-gaj,-5pp,fak,-3i9,ag9,1hh,im,2hb,7d5,82a,2i0,8de,-3gg,d3y,717,77b,-7g7,-9me,-2j9,-8os,-ct9,-i7z,-1j0,-1u4,hdk,4gz,e5g,2d5,-4sn,agt,7zn,-4h4,-6bd,dql,k73,9lz,aaa,1yp,1rc,-7fd,d6q,-2ax,92y,-dl1,-c0n,36l,-csa,-6sb,-1cc,6bx,9b0,dyd,9b,2du,7z8,-7z8,b04,ari,-9kg,-8dt,-5ri,oqa,sh,-z0,-23k,-b2r,-3kc,3on,bs6,-hfi,-9bu,-6at,auf,bg8,-1il,-cwg,-37f,-8c,bn1,fw8,d7,-2pd,-7p8,-7qc,-91,epv,1b3,e1k,-61d,-5iw,-2xf,-kd2,-exn,893,-4gz,-55a,27v,-8ed,-r8k,-5sc,a7s,-im5,9s3,cwv,5vj,-7kx,-127k,kaf,1dbf,3ql,-aa0,3xe,de8,58h,1fy,-bbd,-pxm,gbx,3ah,78z,-s5w,90q,axr,-m8z,4gp,131,-oj2,-o5b,-tq0,m0s,-oc9,-wlc,i0r,-ugj,-hki,-11np,jvu,dar,f69,-1nul,8o3,-1aft,uuf,uel,-11kd,-11o4,quo,2lm,jor,bzo,1vey,-h5d,l9a,-g1n,tzl,-2nz,c3k,ve,gc7,-fbe,-ftl,-l86,f0z,-7hg,e1f,-dwa,9e7,-6oa,n07,-by,-bm2,-rsu,-xny,2jt,ldg,-3k2,hx,-2gr,35w,-by,4zg,o3s,-93s,-i7,-rqc,-cqr,7sf,-60j,uf,-3uh,-isy,96u,-23f,-447,zle,hto,afp,7g7,6cm,-bya,6xg,-lig,f8r,2nf,-8gv,-67m,at6,d3t,7cb,cb2,-2fx,-13v5,68b,iu2,be,-c9j,21h,-fz,k6j,-7e4,-3x4,-ert,-9rt,-7vr,hmq,-tg,kfp,55z,54l,u5a,-cas,r3,vj,-51j,10j,-8ne,-2rb,-33e,-2ax,-61n,-a8r,-5ws,buj,1jz,-2jj,8wu,-9s8,-90q,6jk,-7cl,-1wc","o":"1u4,-40q,-e1u,-za,-6j0,-7c1,p,-82,-4gp,-1x6,-3nt,-axw,8c,1py,7sz,-kf0,-8qq,-6mr,7hl,-iod,78,7oo,ffu,b6x,1g3,-m94,-1fj,-5e6,-anh,-f78,3rk,-2g7,2vr,-5zf,6j0,4oc,5,67r,3cu,-6ep,-i1v,2d0,hi,14,a23,gsv,3hu,-6i6,-9ag,2ee,6bs,-1ao,-9xx,-7oj,wx,-60y,-11x,-tq,118,-ak5,-749,7sz,nm,k4v,2q2,-1m2,-14z,-ghw,-6cm,-yq,-f,-3d4,-l4,-2oe,fu,-7cg,-mi,-f0,177,9cj,-2kx,5k,bqi,9z1,1wr,fmd,12ac,ngl,-n6b,dgv,-qvi,88t,-3h,8yn,2oo,-dmp,-bez,-1jz,bep,elu,wn,kc3,320,-762,-juv,-7px,24j,-6o,8p2,-2oy,5lt,-6tp,-5cd,8c,-1g3,4qu,ktg,79y,-47j,bbi,-2ik,-5dc,-69,iwu,-9ew,ip7,-10e,-30w,-2jt,-k46,3uh,-41,-8n4,g0t,-au,-zk,-1d6,98i,-a0p,3xo,-334,14f,-3cp,-7oy,-fp,-58c,-69a,-y1,1nv,1s1,-8on,1rh,-7ye,2i5,2v2,2p8,3oi,1mw,46a,6t5,-2fx,3x4,-442,-81v,-38t,40l,-x7,72b,668,627,1c7,-4al,70s,-20d,a05,1t0,a9q,-6y0,42j,9om,5kk,-45v,-15j,1q8,-2sk,-67m,5fk,61i,c35,6jf,663,-4v5,-4vp,ds9,7du,b18,-fa5,d11,-6w7,-25s,33j,-cto,-i7,910,lj,dr0,3gl,-9kl,-9z6,-56y,-6at,-hr6,3ah,9yc,-3uh,azf,-9fv,-1fo,-6bn,2df,-89d,-ve,-nw,-uz,-70x,5au,1gs,77q,2wl,1x1,-3vq,a7n,-3d4,-1cc,-6e,3gb,5x7,-9zg,kp,-b77,514,74o,-9kg,19p,56t,893,4vf,c9t,-6j,54v,-2je,-frx,1zy,7hg,-2qm,3zc,9j2,atb,-5le,-28a,afp,gl3,z,703,h4y,-gt0,-1w7,dum,4zb,f0u,-14k,-8g6,d2z,9dx,r6h,4lf,-wn,-elu,-c85,-735,ceo,85w,-65j,-dhz,g3b,6wh,2wl,12h,97e,3on,695,-ash,-1cc,46u,-7p8,-q4,5kp,15y,2x,-a5a,5kp,-5ci,-azz,12m,-go,-4vu,-4hj,6n6,-84s,-14a,2xf,5g4,3wf,4tw,-50p,-4e7,1ld,-xr,-4u6,o6,eug,3mf,7dz,2bh,-6pe,7dk,-721,-1cm,3km,5hx,2i,22q,-6ky,-61s,1yk,-3wz,85m,-sw,-1q3,1r2,-4x3,-5xh,-154,ka,2nf,-3ys,7p3,6fj,-1mc,-z5,42t,9b,-28p,-1t5,1p9,6y0,3u7,-2kd,5c8,-3ck,3mf,-3bb,-7x5,-4q0,1gi,-2ux,-s2,u,-a8h,-15e,-3ij,-7ps,-299,a2s,-311,-2te,-bko,-3hp,-6rc,az,-348,-7xa,8v1,-15e,l9,w3,2na,-76w,-4er,ve,89n,-7w6,-diy,78,2un,-55f,4pq,4pv,-9r9,2l2,2yt,-5p0,-1e5k,i2,3ql,4l5,-221,1j,9h9,-c8z,-4pb,-8ck,-64u,eg,-eg,-39n,-11s,brh,-9i8,-7zn,1iq,46f,7rl,-32a,ca8,7u3,-4tm,63b,-1tu,-3it,40g,-a5f,-177,7qw,-3r0,1wh,-5xr,kd2,-2sf,9hj,-64,5za,29j,-ale,-8p2,-ly,-b2m,-9lf,2i0,5fk,-8st,-3dj,-a5,o6,41a,-4i3,-505,-5zk,1zj,-10o,8ed,8iy,3rp,-2sz,19a,-bat,1xq,eqa,-5cs,4wt,-4k6,-5tb,-861,-1d6,-1ng,-pk,-3e3,5az,2ud,17h,168,-5j6,-7r6,-1q8,-pz,-e1,-s7,1of,-6gn,-4x3,-jg,-xm,-3bq,3uw,-q4,20n,-3oi,-5vy,ak,5md,-1tz,3jn,p0,3os,-8e8,-4xd,qy,-2l2,2ej,3yd,5rn,-t6,20x,9k1,1ko,5tv,31g,bg3,-b2m,-45q,-27l,-7w1,1bs,-9dx,3zr,-3lg,-4qz,-96,iw,48n,-4wy,-3wk,145,-1a4,8k2,4vu,-6z9,-6cm,-1e,-jv,1rc,393,-64k,2r1,-1pt,1g3,wn,5ly,-pa,dm,46u,2e9,-2ia,-bxb,-2lc,-k0,1hm,-2ax,-2ey,-23,-a5,1fy,1i6,140,352,-1nb,-1yk,le,-1mw,3qv,c8,9q5,4hj,221,bzo,-bt,-186,-1d1,5zz,-7s5,6mr,7sk,-e1,-2h6,2rg,-5dc,203,-45v,-49r,23z,39s,-jl,-11d,uf,-23,-4x8,-6a4,-5ku,1ae,-mn,-2gh,1ib,-14p,-1bd,-eg,ff,-5c3,-2kx,-113,-18g,4av,-1i1,-2pi,-1nl,-1gn,34i,ve,-36q,-5xw,a5,-ov,5jl,-4kv,145,1dq,3u2,u0,5tg,-1ok,-14k,-1ln,-2np,-1s6,127,75n,-302,-1u4,4al,5tg,1t5,2l7,46p,-cvw,44w,-1rm,-1nb,6pt,2mg,-ih,b81,-1sq,177,z,aov,-8hu,-6sb,-4pb,-sc,8yd,-3se,-6yz,-1rm,7mv,3ts,-16d,-63g,-34s,-5zf,-1mh,-n2,-36g,yb,-6p4,2vw,-jg,7d,3yx,-4tc,5z0,-4ht,4oh,13b,32,-433,40g,-48d,-49h,-2df,-2cl,181,n7,-1bx,hd,1gs,-2cq,-3aw,-k0,25n,-sw,2z3,-up,35c,-4si,-jl,-21m,1s1,p0,-3kr,20i,33e,69,-2fd,2lw,m8,-4uq,-4s3,s7,-yb,2s0,3bb,-17w,68q,-i7,uz,-5b4,-13l,j6,-7ik,-262,-a0,-2g7,-9bk,-2px,-52i,2i0,-4c9,-7d0,-27b,1cc,2fi,-4jh,-1c7,i7,2x5,-2z8,-8q6,-14z,11x,-2qm,54v,1dv,-2b2,3h5,-azp,4e7,8ql,2u8,6q3,1lx,-758,3nj,-cn,2na,4ug,415,9l,-1y5,nr,-ri,-5kk,4sd,-1l3,24e,73u,8jd,-37u,bxv,5yb,9c4,-6vi,2u8,695,6hw,5ws,-339,-3xy,-6xq,vj,1l3,370,1fe,3wu,c67,-7fn,-1xg,-16s,2zx,-2y4,-1k4,-33t,2o4,1zy,-5i7,168,pz,-49c,-31q,-29o,1j5,21c,4qz,4j7,9qu,aol,12h,-4vk,7ml,7iz,-gj,-37a,3km,-4ag,-cd,-20n,5uu,9c4,7ux,-447,99m,2wb,-7fi,9kv,2mv,98s,31q,1k9,-6yz,-8xj,-10t,-136,-3gb,7lw,-4s8,2ps,15y,b9p,1cm,-8m,-atq,-4gf,3nt,22q,-47y,vo,1oa,tq,-7bw,-2ad,-2ps,ob,7ud,3e8,-1rw,-5b9,-1l8,-528,-38o,-3uh,-2gh,-2da,ov,-54l,12c,195,7x,3gb,1il,-cmb,5q4,7cl,-1wr,-528,-55,-15e,nh,3vq,532,2jo,528,9lp,2cv,5jb,-5p0,1uy,13q,-1dl,3zh,-41k,3am,4er,24o,1jp,-2r6,5ev,-r3,33j,-320,-4tc,1ld,-2dz,-1kt,3rz,-253,-3mk,nc,6y,2hl,-zz,-15e,3mf,1rm,3k2,8ti,dr,217,-3xe,-9v5,-6l8,9v,-2mb,-2je,627,28p,253,-7n,-7dk,5pk,2gr,2df,-3ck,1op,14u,-3de,5sc,104,-4ec,-3l6,8rk,37z,cx,-8c,tq,2tt,-7s,67w,-j6,-2o9,-9n3,2qr,-sm,9dd,6xv,-212,abo,11x,-492,-1tz,3i9,5sh,721,-8r0,-253,5dw,-1eu,-5h3,-3fm,-131,7ux,2oy,2ud,-3ny,-113,30m,2t9,-7j9,1ky,a3c,go,3c0,-53m,4lk,-71h,3ma,1x6,3yn,334,-c8,-75n,3ij,-6t0,433,-5s7,2xf,x7,-4j2,-ev,4dd,19f,-456,-1g8,2hq,1ld,-37u,-1v8,36g,82,6u9,-pa,5bo,4u6,27l,74j,-ih,7d5,-1cm,5mx,1n1,-6bs,4k6,-532,2mg,-8fm,-7d,-yq,78f,b9,az5,-564,1yp,-2l7,7sa,rx,72g,-4di,-7hb,3so,2ai,3w0,2oy,2r1,-6wm,1ya,-2n,-2b7,d7,-5zu,64,qy,-b9,-2b2,-4ug,1oz,-1t0,-af,-1m2,-4tr,-iw,xh,5vt,-5pk,-2wb,64,-3u7,1dg,604,-1vn,-5ci,1ek,-mi,-2px,-5i7,-ms,ri,-3hp,820,ir,3uh,cvm,-50k,32f,20x,s2,4ss,3d4,-118,-31l,4o7,-2yt,221,6bs,4th,672,-1d6,-7jj,a8h,-1qn,6ya,-k,2un,-2je,-6v3,-1nv,-eq,fz,3pm,t6,-1cc,-2bm,3q1,-2qw,-1s6,1li,-ws,1s6,5xc,-ir,1k4,1zj,-4g,-3lq,163,1rc,65o,-7fn,8ur,-j6,1f9,rn,21r,-5mn,1bd,nc,-7c1,79o,kf,-4h4,-145,-45v,16d,11i,-267,5cd,-3x9,h3,-8it,-13q,-1uy,3ac,-7qw,-au,3vv,-5d2,8gv,-43d,-go,-57x,-3f2,3dt,-113,kz,-k,-6rh,el,ua,lt,-2c1,lj,nr,-4j7,ov,d7,172,2pi,2ps,-1bs,jv,271,3hu,1o,og,6fe,1vx,-5el,-13b,-1j0,ev,-1ju,-1oa,-36q,k5,1yf,-xw,-2fn,-2v2,1rw,6e,-41a,-1bi,u0,ge,2wg,4bp,-3l1,32a,1r7,-1x1,1ek,-1ln,-2ip,-4b,-45q,-21r,-f,-3sy,1of,6j,-1c2,-8t3,1q3,2s,-rx,1vd,-1fe,-131,-9v,-2s5,591,5up,9v,1gs,-3fr,fp,-104,4g0,1lx,-3ck,1gx,-3tn,1vd,-19u,-14,4id,-1rr,-2ps,-3r,-uz,-2c6,-37a,-2an,3gl,d7,1hr,3wz,ge,2kd,-2hq,2d,ol,zf,-5bj,-6ta,-3dt,ka,-1qd,gy,-cs,21w,jv,1xg,2as,3rp,-2iu,78,-1sg,-y6,1e5,33y,10t,-34x,4my,-1mw,-au,-10o,-tl,hi,-bo,45b,-1ep,2oe,2br,4pq,-4dx,-1g3,3mz,-2xf,-cn,9l,2fx,-41,22l,-3vb,ka,154,pp,ua,38t,2xf,-o6,285,-6j,1z4,1po,-267,sc,2sp,-1ch,-qj,-31q,1sl,4fg,-yb,17w,5xr,-xc,awi,-1bx,h8,-4ro,-64,-4s8,-4sd,af,2cq,2lc,-4v0,39i,-1fe,8rf,3k7,3mz,nh,5o1,-25d,-2oo,-jl,-3kw,56y,532,159,kz,5ol,-1qd,l9,-lt,-4me,-9re,1jf,-7qw,-3fr,h8,-4n8,26m,-21m,6o,-6sb,3ti,-20n,-4my,-eb,26c,-3qq,933,-fu,-9va,-37p,-13v,366,2y9,2if,6fj,23f,-78f,-1x6,18v,-406,8p7,4h9,1o5,-177,-21c,1gx,2b2,4mj,w3,sh,-4l5,-2ad,26m,-19u,7kx,-253,3os,-5z,311,-2nk,-75i,-4zv,25n,361,-398,1p9,1o0,-1vs,43s,-34s,-nm,-320,-1vx,-2x,-447,25s,-1p9,-11i,37u,4uq,3zr,2ye,690,-a5,3s9,5kf,-8c,9gp,2bw,-4ag,-fu,-7n5,-22q,f8w,6e0,-3pc,et2,-9p1,-3bg,1rm,aq9,-3z7,-753,-4yr,-5fu,hzx,-6wh,-30w,-4uv,-c7l,-1zy,67h,-1qs,6xb,-208,-226,-5ic,74t,4bp,-2w1,24y,-q9,5kz,52n,-1uj,-6zo,-18g,-1bi,3lg,-8t8,-1ja,o1,-1iq,4ii,429,-951,-87,-t6,2eo,-4b,pa,460,-8qv,-1m2,-4s8,-1ch,14u,28k,3i4,37p,29o,2fs,5c8,pp,-1h7,-60j,-gy,4xn,7ip,2gm,-64k,33j,fk,f,-5kk,-3lq,6o,230,1nb,-1yu,3xy,1op,-1y,32a,2je,11x,30r,-6q8,6qd,-79y,-1c2,25x,-og,-1mc,3hu,9b,1pj,66i,-1a4,29o,37p,9l,113,kk,-6f4,1f4,-48n,1qd,3fw,-398,hn,-2b2,-1iq,2oy,3w5,fk,357,-im,-ir,4ec,-442,-1ef,-m3,145,1hr,r3,3r,6o5,-1wc,-190,-4b0,-1li,2r6,-3mz,-3hf,fp,-2sz,-3qq,3b6,-69k,-k,-4co,-8p2,-3ij,1yp,-1hw,-3r,-4e7,17w,gj,1y5,1p4,82,-5ms,-325,13l,-27l,-1rh,1gn,nh,e1,2rv,3ny,-28,-5q4,ih,-1dv,4lk,40b,-6h7,-26w,kz,-1cr,5mx,1c2,45b,27b,163,-1d6,az,4bp,rx,-fsh,-bn1,-27v,91,-wx,56o,10y,2np,1oz,11n,-4oc,5dm,3ha,-d2,68v,1x6,-7lh,-34i,16i,-5qj,-4ry,-2jj,1qx,3ij,-nw,9qa,3h,-889,609,31b,2gh,1ld,-50k,1hm,4p6,f0,-5yq,-fu,-38y,1ib,-2l2,-ir,dyd,433,1of,9lu,159,-2q7,-4nd,-253,-2lh,1ch,-4lp,-2d,-2nf,2wv,3es,-3hk,4vz,4me,-3ei,-32u,46a,5a,1jz,-gy,-2y9,-1pt,-2qr,-6v8,9q,34i,-17r,-o1,1yp,-2c1,-5z,-xm,-2vr,-3fh,-af,1ep,109,-35r,ov,375,29t,-1f9,26r,802,-b4,-cnu,m3,-4rt,9sd,10j,721,-6ek,1ib,-18g,15j,3h0,-12r,-5pp,3xt,-43x,4kl,6vi,-3jn,1cr,-1o0,5a,10j,5lt,-1y0,-118,-6hc,-9d8,1uo,zz,-eb,-hx,-nr,-c8,3no,-294,-41f,16n,4i3,cs,-5c3,-30w,582,-1yp,-19k,-5ih,3so,tv,-ov,1e0,3jn,7qw,7lw,-2wg,3jn,60e,-4jh,83o,vo,-1ko,el,-5bo,4g0,7k3,be,-2fs,xh,-2zs,-v4,-88j,2a3,f9v,19z,-3c0,2n,-2fx,3lv,2ai,-5dh,-r3,-1t,-9aq,-rd,-177,-l9,-30r,-w3,-3x9,ehe,e6,550,51t,1ng,2rg,4h9,-6qx,-1uy,-2o4,-4xs,1p9,-4fv,-y1,4ry,7v2,u0,2o9,7cb,-8vq,v4,-82,-2ks,ee2,-n7,adc,4ga,280,-2q7,f5a,1tk,-2n0,4ec,8uw,4ec,34x,-ge,2xu,a8w,47o,-7tj,2to,-7wv,-3ei,1v3,-16x,-1pe,-go,-2hl,7an,3vv,73p,d66,2yj,-29e,65y,7r1,90b,-5el,2pd,3bg,-7v2,11s,gy0,1iq,-4mo,-6bx,fdc,-45q,mx,-1p9,-6ue,-q9,-2d0,11i,-21h,58m,2wv,-2gh,226,-87z,-18v,fx7,7if,1w2,cd,66s,be,-7qm,et7,-1s1,-23u,-3bq,-kf,-4p6,-1u4,-78k,-be,2z3,-4rj,zp,-5i7,-40v,-5xc,235,-3gg,-ahs,14u,5vj,2su,eb,-4tc,19u,-4ns,-4ry,12c,1kt,5k5,-9ct,46f,550,a46,2mq,-q9,-dc,-5x7,-2i0,3n4,-1ky,-7x,190,3ys,6n6,7fd,27g,-8ys,43s,316,-23a,7l2,f5,j1z,14u,5nw,-23z,3zr,2xf,9f6,arx,-3qv,bg3,9sx,-7rb,-zf,-4k1,3fm,-4pv,2y9,-y6,-145,-528,fnc,-8do,-2bm,7hq,-92o,-1wh,36b,-8t8,24j,-2eo,578,-9b,6s6,-r3,-fa,-3hf,-3fm,-yq,1ft,ih,zk,5n2,-73,1d6,4wy,4gf,af,1z9,4zq,5s2,69,-9sn,79t,12c,k,-5ol,v4,71r,-46p,-14p,1k9,f0,-3ll,-2h6,2s,91,3hz,2xz,2r6,3y3,2u8,6ek,-334,6vn,-735,-37z,-1z9,-4qa,55z,-6uo,3ca,-2qm,24y,-4s3,p,39n,-3qv,-1wr,aa5,3dj,3mp,83t,sm,-2t4,5xm,-ci,-5cs,9k1,5cn,-442,3oi,7pd,-55f,2ik,2gh,55,-bl8,2l7,8km,2d5,kp,-5gt,7wl,fz,3r0,hj9,3am,-85c,bt0,-3ts,-13v,-33o,-1ze,a37,4ce,4kl,qj,4w4,-e79,-3mz,-3jx,1jp,32,-7du,4kg,-1yf,ap,5t1,-37u,3gl,-5dm,-6k9,-1hr,2n,9pq,qj,-6hm,-tv,dw,-1z9,a9q,1oa,6h7,-zp,-780,-32a,-5nm,-i7,2q2,37k,-ku,32f,-adm,-2xa,99r,-ff,1ao,604,1cw,-ci,-17w,-8js,-13l,-3es,-28f,53m,-2a3,gy,-1t0,73u,3a2,6ea,-u0,-9hy,-7cg,-5ri,-xc,3u7,-23,-4sd,1yk,24y,-2du,yl,5dr,sc,-n7,1yz,-56o,32u,hx,-9gz,2qm,rn,-5ci,-4la,-49r,-2gc,-2du,-24e,-16i,gt,3cf,be,22g,-47j,-1f9,1m7,-3st,1ut,49r,-13l,-3w0,5lo,-1nv,-8xe,3bq,-19k,-29j,2as,1db,1w7,6yz,3rp,-6ef,46,3tn,8lg,-1hr,-55a,24y,17r,-1vs,244,2x5,-bt,-50,5wx,384,-1tu,-7j4,-2hb,1gn,-10y,-6yu,3wz,-2us,57s,1c7,-18b,3m,2s,-1jf,33o,10j,ge,3so,6jp,3a2,-2mb,fjl,-2ad,-5jv,2d,4tc,4kb,1uy,21r,7kn,tg,753,-9eh,2yo,-gt,177,2i,2cg,38t,-mn,-104,3ll,22q,280,15e,5e1,2zi,-9v,-s4i,2ax,cdf,dm0,799,1xv,1t5,dck,-10j,1dq,3km,-87f,-3kh,-tg,-41f,3xy,55f,-334,rs,54b,-7b7,rn,4m9,-1z9,3ma,-1y0,2zn,1o5,26c,3fr,4zv,-10t,4dx,-938,za,-5ms,-53r,2d0,ak,xr,-3mz,2xp,1sq,-1zy,-42t,-18v,4f6,-1op,1bd,-10j,-1ae,48s,-4ry,-5az,-7yy,-2df,7s,59b,-b9p,-qe,-g4,-17c,2vw,fa,1bn,1g8,14z,24o,46p,-30c,4s8,-4oh,-1bi,d2,1ay,3mk,1hr,-370,6eu,-131,-3qb,2dp,21c,-yq,1h7,cx,5p,-1ut,3on,33e,yl,1aj,-2wb,-b4,3q1,-1hm,-15y,-2ej,-159,-1bx,-23,-18v,1yk,3en,-41p,30h,3zm,f5,4gp,o6,-26m,4lu,-6dg,-2l7,-17h,1b8,2ui,20d,2iz,2x,6vx,-78,1ky,-57x,20s,2rb,-wx,-3yd,-mn,1tz,38o,38o,4jm,3vv,-9p6,-6qn,-3gl,-2m6,16i,-yv,a5,-1g8,56e,5,2pn,-2ai,2c6,o1,9g,32p,kk,-2ej,1b8,14a,z5,59q,6dl,28f,1gd,-39s,-235,2ik,-1dl,-1m7,cn,-3zr,vo,-og,-2rq,22v,-lo,ff,-3d9,3ma,-17h,-2a8,3js,-2us,3am,-1dv,-39s,-11s,488,57i,-4gk,1cc,6xg,43i,424,3r,-2yo,-5ih,370,27b,8ha,3vg,-3td,1v3,-fp,6yz,-1x6,-xw,-2u3,5i2,-1gn,-1b3,18b,1u9,-2na,-2sk,1jf,1ls,-1s1,-1jk,25x,1j0,1d6,a0z,6r2,af,e9h,-2if,1ze,2lw,-2cv,2ye,-5ir,-1j,-91,4gk,-6ko,-3dj,-1t5,-iw,-41,4x8,-ms,u5,1zo,-40g,311,-r8,2a8,-3vb,1ae,p5,-1jp,9ss,4jc,3u2,-1cc,7hl,2u8,45q,-4rt,35r,-w3,6j,nm,qy,-1rm,-2yy,1d1,16n,86v,ay6,3ne,0,3g6,-7yt,-56o,-wn,6jf,3d9,-1rc,yg,-9p1,-3qg,3vg,2lh,-2r6,-1hc,33y,1ke,-2yj,7f3,2q7,31l,-2qc,-1wc,-2gm,mi,1j5,-13b,3m,-1s1,4pl,-6n6,4co,-51y,-6ek,-6nq,-1a9,203,-3xt,5hs,-oq,24t,dpc,-4sx,-fo6,a2i,-4i3,-2yt,-1nv,6jp,-l4,b3q,8iy,2d0,27b,-26r,-6ef,-4bp,4p6,-au,1o0,5cx,d7p,62r,-21c,3fh,-98s,-2vr,-1dl,3hu,bko,9ce,-5m8,226,42j,-299,-ax2,ap,2b2,-4n3,-4hj,ba4,-7gm,-ol,-3it,tl,uk,-3pc,14u,-a19,nw,42e,-4l,-aa,mi,-2sp,389,-2ey,-34x,-2lc,52s,34i,6cc,-4t7,33e,-3qb,4va,-4zb,nr,tv,u5,762,5tl,7ps,-1ep,703,-3s4,-5ka,-33y,4bu,-2q7,-53h,39d,alt,2wb,-69k,-3j3,-2et,-e6,-226,2dk,1x1,-p5,2cb,63g,-2vw,573,-63v,4nx,-21h,8sy,5j6,-7tt,5sh,-2ey,-48i,2su,-276,-14k,-3fm,mi,-195,2xk,6c2,-5a0,65j,39s,-3lq,-50a,-1ya,19k,-2nf,-3io,-1rm,-3i9,11s,6hw,-4v0,140,2lm,-2w6,1qn,3i9,12h,-44c,xm,-2lc,-3tx,eq,2xf,qe,-6n6,-i7,43d,1dv,-cx,d2p,61x,2xa,-1r7,-2dp,a73,elz,-2as,-5j6,6q8,7x5,74e,9w4,f78,-7iu,72v,7w1,5zp,-5z0,9lp,bzt,f91,-2xa,6vx,-9w9,-505,-avj,wi,-2o4,i6l,2sf,ce4,g4,44c,s7,74j,-dbv,35w,-dnt,4q5,-6zy,2oj,1p4,18l,29y,9ow,-a2s,4is,-2sa,-2y4,-2hb,6h2,5gy,6mm,-4ni,-4y7,-1ju,-3uw,16n,3mf,l4,2wb,910,-3ru,1k9,-fd2,-bb8,1hc,-1m7,-2pn,-4gk,-2u3,-54q,eoh,924,-7a8,2xu,-307,3wp,-26w,5w3,9lz,-24t,2jt,-186,k5,2wv,32k,5cs,-8fh,pz,17h,ly,-3a2,235,7oj,-fz,640,a3m,46,3w5,-au0,-39i,-2qm,-1ze,-7if,2x,65y,38y,3q6,5xm,339,4b5,7je,2hv,-668,-3j3,-ov,-55p,-4mo,5r3,5nc,-1lx,-9gk,-267,1iv,9l,-7nu,-5e1,-172,311,-3uw,wd,-2h6,2hq,74e,370,-8c5,6o0,-87f,4b,-az,-4l,71r,4ss,-24j,7pd,-4me,4tr,-bj,-2d0,-1sv,-3xj,7z3,a8c,2us,-9m9,78u,-5gy,1o,28,sr,kz,buo,979,1l8,2px,8iy,-5fk,8um,-5x7,-b7h,-dlv,bxb,-rn,iuh,-7ey,-5cd,2a8,3g6,-67w,5xw,-aeg,2e4,f4l,-f5,xw,-fz,4c9,-33j,6p4,d9d,-145,438,-dqq,7zi,20n,-8wp,-64k,1hm,5ku,-1ze,-1jk,16s,-1dv,buo,gcc,-1vi,2vh,-1nl,3r5,21c,-537,-1aj,62m,g3q,3ll,36g,3y3,2y9,-2ud,94m,9we,-6h7,66s,-569,2k8,-a91,7x0,-aa5,-1of,gh7,-20n,-bj,35m,3ma,7o9,cnf,-a0f,-4fv,3c,49c,3on,-2qh,ckx,-46p,109,-4tc,-54b,-k0,5tq,-6vi,-o1,e2y,2hb,au0,-14p0,-4fq,6y,9m9,-7tj,3e3,1ae,bzy,mx,ghm,5dw,-cdf,3jn,-3nj,-el,-57d,2n,-99h,-6aj,5b4,-ly,63l,4sx,2pi,-b0y,32k,104,-b4,-yg,4fg,-47j,p5,63g,-2n5,58h,-113,ob,2d5,-1ld,fp,4f1,42y,-boa,5le,-2hg,-1gx,6yf,6ut,5o1,-5nh,42t,9pl,4g,78a,-3aw,-24e,-4ni,5z0,-6db,-1wh,-2su,-ev,-23u,47y,6ky,-5mi,1gx,62h,1il,-6gd,2np,dp7,20n,-6nl,-4ub,13g,-2j9,-294,gy,-nc,-1uj,fw3,1yp,8ll,-4d8,-5oq,60y,74e,-14k,8mz,ao6,ldv,-67h,-ex8,-6fe,-1dv,42o,5gt,1e,-3vg,3gq,5x2,6mw,2rb,-2q2,2xz,e4r,654,4mt,25n,dwp,jn8,-6m7,7qr,2ux,-3m0,mf8,-9kq,ypg,-1teg,u4g,okb,1bt9,-ffz,-zkk,pvt,3n9,-18ym,-ep1,mad,839,-5a0,phi,l1n,-qou,-4m9,-app,8hu,kx2,-ax7,4di,9wj,2qm,-cdz,-6aj,qe,-1qs,oq,-b63,-87k,iio,h9o,-3ei,2p8,9oh,8en,-24y,fhd,5hs,3ij,pup,6dg,-dos,-22g,27l,5ge,-hyj,-9nn,-c76,-7nu,-7kx,3lv,1xv,-3qb,cai,adm,-3cz,etm,-x0r,85h,7s0,-cd,-hmg,-9oc,kz,-9ht,ha3,-447,-be,-19,67m,-875,-4ix,l4,-32k,8w,8pm,-4gu,-az,3sj,b2m,6e0,-2lr,-bju,-1r7,-2sf,7lw,-67h,-3es,76w,-bat,5pp,bqn,53h,csz,-bgs,46a,-145,-244,a,-p,-1hw,2nk,dhu,50,-9or,3dj,el,2xp,-479,35h,-2u3,3v1,-3g1,u3h,-gj,-4ct,2zn,1l3,cn,4q0,-4l0,-6mr,-1a9,7q2,-2o4,-53m,1sq,63v,jjh,bfe,9si,fup,-ash,-6ou,53w,-8m,-41u,-177,-4jr,-4lk,28,-4sn,3ac,f,-451,qh2,-2pd,h3,-2rg,1m2,-hx,24j,d39,-6cm,ew4,-2w6,2s5,26c,-63l,-9nn,-4gu,-88y,-4r9,-5ri,-5af,vj,-4nd,3bq,4hy,-613,58c,-3it,2m1,-41z,kyg,-67r,3bq,-3m5,l9,6a4,-69f,-70i,2i,-5h8,sc,-4b,10y,-1ld,-1ig,-23f,ap,vwm,-75d,-9ug,-5y6,-4h9,-1pt,-2x,-wn,-1q8,-27b,-9lf,7b2,8zc,-6ut,-tq,-6x1,5s7,-3ij,ce9,d9s,-bja,-87k,auk,gbi,ifm,kv9,-jv,o2o,-14bo,-cv7,-2pd,-884,26r,-3z2,48d,yv,-7px,1rm,-3fc,4h4,5h8,98n,76h,oy7,5qt,-jid,-1cm,rqh,-4k1,-45g,-dzc,-460,32p,3kh,-3qq,23z,me4,96a,6lx,hdp,myt,-l1x,-a,-3kc,ckx,izc,-2s,-gpo,9cj,-5bj,ffa,44m,-7x0,55,3os,prd,-asm,-4k1,-1ep,-42t,hrq,-efg,-15o,-2qr,-cad,-bvx,6hm,8yx,-bta,epv,-122,-4ct,-hi,-136,-4pl,9sx,5iw,-cvm,-35m,271,ajb,-egu,11x,6fe,-3fc,-12m,-145,-b6x,488,-4b5,-2oo,39d,-21r,2lw,a3r,-3it,-82,-1kt,-6e,663,-3bq,5n7,-h0x,587,dkh,-43n,-1mc,7rl,4k1,49w,5sh,-19f,-35r,-ci,-4mt,9u6,-4b,5q4,-1ez,-3hp,-40l,2p3,5u,5jl,-6qx,23,1x1,8st,40v,-17r,2wb,-sh,-dts,-4wj,-fp,53w,1s6,-eq,3h5,-4or,-b2c,-3g1,-5cn,9hy,-58w,7e4,-4vk,1hr,-ov,-4u1,-bz4,-e92,8fr,-apf,-4pv,1nv,31l,1pt,-4co,mx,343,-a64,-6yu,9lu,3mf,-8lq,2n5,-bqi,3ex,5y6,c6h,-447,7rv,-f,-5ua,-cf3,gmm,1k4,-n7,-61s,-5vj,-4xi,-52i,1s1,e60,dde,fsc,8xo,816,-8se,6ju,phs,cgc,-bay,6bn,95v,1ep,-26r,33e,-3dj,78p,-9nn,2fi,9v5,352,9pb,taq,-h3k,af0,-96f,o3i,55,58r,-4tm,-gut,hlw,mwg,-a8c,-bx6,kz,-2px,jct,-37u,7w1,9m4,mfs,g7h,6e,-6xq,-g4,b8v,-bgi,-4al,i2,-6y,-8gb,-ien,-9k1,-843,1qs,-15y,-6y0,-4h4,-38j,-28,-5gj,-5l9,han,eq0,cnk,-9l,wvh,-lbs,-3pr,87f,-2zs,-3no,-5p0,g0j,5pa,iq6,10e,-78a,-3zr,5vt,i07,-wcg,6nl,73f,-33t,-140,-iuh,a4l,n7z,-b0j,-o3i,-zp,hdf,79e,dc,-ki2,-kmn,cik,-7ud,-ic0,ic5,-7m6,-6hr,gcm,-f1y,cas,-9v0,ahs,-33j,-262,-2bm,479,-i0r,-ium,9i8,2pi,6gn,-6ng,537,47j,9l5,r8,n66,-71m,-c6w,5go,492,-64u,2p3,-4ab,hhq,-b5t,wbw,da2,by,-5pz,ol,7xz,gfy,f19,7s,-qr2,609,8c0,-h5n,5vt,7qw,d5r,-50z,-4b5,-aau,-gy,5j1,-baj,don,-2zx,43x,95q,-gj5,6c7,7yj,-4gp,2v2,10e5,-1lx,-17h,-e3x,a7n,-83y,-389,79j,-75n,-7ik,-fz,-3qb,-9mt,7l2,-d8o,-1h7,43d,-65t,58m,cgr,66s,-2yo,-9t2,-bue,38j,-6ay,-4ho,2fn,bi1,-cud,-bxv,-62r,-7h1,-2q2,-302,69a,20n,-9jc,2f3,429,-2yy,-25x,-5ve,-4gp,g22,etw,-gzj,-64u,c2v,4ns,-9l5,-qkj,-4em,4jr,-97j,33e,-83o,-3wk,6y0,-3ie,-1z4,-hy4,d1b,kir,-6ao,-3jd,3pc,-1jz,kka,asw,7zi,x7,dji,-mv2,gkj,-9sd,3nt,-249,-bbd,l0y,-7kd,5ms,ajg,-cvw,-3pw,4ba,-av9,3lb,fk,bq3,2np,-2cg,-7vc,-14u,7c1,-6ib,-4x3,ov,a4l,18v,-5yv,3n9,-34x,-vo,154,5t6,6o5,-50p,4gz,-c6w,17m,-a78,-528,-a8h,4l5,4ce,1fe,-38y,61n,-2yy,csk,-7bw,-6g8,uf,fe6,3v6,-a7n,-3h0,i7p,cgh,d6l,-e7o,-3a2,-2wv,-b7m,bv8,-52n,-5cn,ehe,8h0,bgs,-bgx,fzf,27b,4u1,-6vi,ao6,-a2i,-70x,x7,6sb,-a,52d,fjg,l1x,-898,5ci,f2i,-776,-a7i,45v,5ak,-9d8,-m3,-ov,6t0,-6wm,-979,4jm,2d5,9bz,63q,fih,4w4,9or,2rq,64a,-708,7oo,-b1i,-2ee,-6u9,e2t,2du,knc,91p,ezq,p5,wn,618,-3mu,1yz,1ky,a4b,-3w,66d,-7z8,-bj0,2b2,-aeb,-51e,u5,-1cm,-42t,-1li,c1r,87p,2o4,13b,17m,-2rl,-le,-3km,-7v7,-8uc,-1rh,1uj,-dhk,3q6,-b3g,2w1,-46,4ow,-361,-4lf,b95,95q,c5n,-1bx,-8qq,15e,q4,-415,-a3w,1ky,-23k,4m4,72l,1aj,1ef,50,-4ow,708,74y,-hx,-6ib,-ve,6nv,-7xa,93d,-4yr,-kp,6cr,5w3,-ol,-5b9,-4xn,-8no,-5v9,1cw,kp,-8m0,70s,3fh,-y6,8qb,6a9,-5hd,-7nu,2y9,-2bw,-bdl,4a1,5ve,3rf,-3gv,eqk,122,-6qx,3w5,9xx,6c2,-46k,-1kt,4cj,-45b,4th,9pv,-3wk,-7eo,6ky,-nc,-5mn,1ld,-dc,bgd,2fs,-le,2hg,6mw,9e7,-do3,-af,-sh,-2ax,-9wo,-3hf,-87f,90v,-67m,1x1,-2rq,1qx,64f,7ks,5g4,a5,1ea,-64k,idt,-4em,785,sc,-1ue,-2hq,23a,-9l5,-3f7,27q,-7g2,fa,2g2,biv,-64u,-1e,ii9,coe,d48,-956,-6r2,btz,5s2,-10t,sw,-532,-7d,gy,4si,-5o6,1oa,3c0,-1ut,-6ze,-4eh,2v7,-yq,-25d,21h,15e,-3h5,-99h,-1wh,-5p0,-6jp,-3kc,109,2et,-2q2,-2gc,8nj,9g,-5ku,-d20,18v,1w7,ucn,-h26,-44r,-5vj,-c4e,-4wy,hd,-13b,6ln,b3b,-42o,-e1,i3o,8e3,-6wc,35c,-9c4,-3f2,3pw,5t6,-3ph,-k0,10vi,-kqe,7vc,-nhu,jkl,-ied,6f4,-361,biv,-81g,8u7,mia,-4a6,e97,-63b,-k7i,-bo,-1ko,-1g8,-7jj,eyc,-ahi,5yq,3mz,-8cf,kaf,-3o8,-met,-5u,15j,-bb3,wn,e9h,-3h,xiy,-cnu,37a,-528,9yc,dc,-1p9,-cp3,-4ds,-5dm,-clm,-jg,fa,-3rz,5z5,-23u,-6sb,9fv,-2l7,c6w,54v,-1qs,gpe,-m12,1e,63l,1h7,-jk1,fgt,-cy9,5rs,-677,mey,96a,eg5,-5i2,kmi,-4yh,-5ve,-83j,48x,-6j5,-3x9,-9lu,-1mw,-ra3,-217,87u,6v8,4h9,9xs,2vw,5pk,2rx8,-11yo,-1rc,-104u,4mj,1gi,1nq,6bx,-1t,zu,8s9,1h7,ccl,-c03,-b4k,-b8q,-ckn,5t6,-bhw,83e,el,58c,-8iy,oq,-6cc,ag4,67w,-8t8,2i,82,-ju1,owy,-4we,6xl,2fd,-dij,-vr2,89s,-1dq,-4z1,1jp,5i2,j2t,f82,-mi,a5f,1hr,-22v,fov,34x,-fx2,4wy,-3ur,-6x1,406,1pt,-82a,jl,-1nv,-901,12c,48i,2l7,-8e3,84s,imz,-8pw,-37u,8wz,-pel,5pf,1rm,-4l,1x1,5hx,-kg4,-54q,-1gn,-82u,-g95,5ci,jbp,-nh,fn7,cwq,m8z,-dyn,6gx,5ak,1mh,-82a,9y7,2vh,lez,-ela,di9,p73,-4fb,10y,ib1,-6sl,-anc,2d0,b5e,-4g,oq0,-mwg,-diy,me9,4la,-465,qez,kbo,q9,bou,up,aov,-1289,2fx,bhc,-5eq,rs0,-fqj,-afk,-6x1,1n6,-d25,3zh,15e,3ac,-1n6,4av,-ktv,6kj,j74,7na,-5r3,sso,-16d,375,1z4,-xc,bq8,-6hw,-84d,-vat,esd,x5r,-25s,4ga,bft,9ag,8g1,-s7,2vh,51t,5pa,-46z,ums,-4c4,-5y1,72q,8kc,8w,-air,-668,-gbx,3l1,-37u,-hp3,84x,c8k,6wr,cik,o1z,ff,1vn,cwg,-bjk,1ez,-6lx,-73p,4qa,4bk,-2ee,1ue,nti,5t1,-8ck,-ke1,-59v,-3dt,4qz,-bq3,52x,b4u,-c08,-d9x,-2ip,-bvx,-e1z,-b13,6e5,giq,-c6w,695,dj8,-as7,-7p8,m2b,-v40,-6vi,4pv,-a9v,32k,-76m,-ypg,-dm0,1ef,27l,2eo,j9h,-jxd,2oj,lt,-2oo,-37p,9cj,-dz2,c62,-5kp,-12xo,m1m,-43i,-sd9,3gl,4me,o3i,-5c8,9l5,-ghh,-6b8,a2d,66d,-nm,4ry,-3ma,it8,-4lz,-4lu,-jmj,4e2,730,-k5,lbd,-iy8,-giv,9lp,-1tu,rs,-p23,-2hb,agj,-7a8,-llx,-4pv,b5o,qj,aeq,7p8,-2hb,-u5,-7ax,2yy,c2g,85h,56o,-87a,-16x,97e,atb,-72q,85r,-67r,dzc,ddj,7u3,-gbd,2q7,-9qa,d2z,-9ry,5ge,56j,-a6j,dyn,-gh7,5uz,-2k3,-1ut,4q5,-6w2,-6jf,4ht,ez1,-1fo,egp,f1e,32p,-eub,5nw,-7lr,j0l,609,29t,-ci,1dq,-4mo,-31v,3u2,-crq,-451,1ch,6ez,2rb,31q,401,b31,cn5,785,68l,-gnb,-ae6,-cfi,-1rw,2lc,-8am,-92y,-3v1,a6t,-axc,-eow,-cks,-1fj,2ik,csk,asr,-9h9,af,-5jq,87z,axm,-54q,bcm,6gd,-4ii,-5gt,-60j,-37a,22v,-ayv,-519,8mf,-adr,-4mt,370,clm,8ru,-ryj,3iy,2nu,bkt,4av,1gi,-406,-eeh,fdh,249,86l,-9t7,-5uf,-7i5,71w,6gx,-3x9,-48i,-8zr,25x,27b,63b,9ct,5p,-c8f,22b,-ddt,6fo,uk,6j,hpx,c4e,-9co,cqh,-1bd,4q,57s,qu4,-19u,46p,mu3,-8n9,-6h2,-5pa,-5n2,137y,-miu,18si,-7sf,8q6,-6s6,1ng,-yq,3d4,7oe,7px,-jzv,-6qx,-55a,wbw,-cpi,-2o4,gr7,2bm,4lz,lp4,-fxh,-72q,-bkj,fw3,-ccg,1hc,s5w,2r6,o10,-ml2,-6sb,-b6i,f3c,-c3,o1u,-2mb,-iod,rb7,gu9,gy0,-pfu,-ei3,-lzj,-az0,ac3,-d4d,-jix,-57i,ejh,-eh9,221,-fl9,75n,29e,fms,-bd1,46k,-68b,-1o,-4av,1j0,-ccb,5jl,4fq,bwh,qgx,-3vb,-can,6s6,-cxz,4f6,-fkf,dj3,-3pm,-721,6z4,-22g,rcg,kza,-jmo,sr,-aci,8nt,-39i,1b3,1gs,-4ew,-g8b,a3r,-519,-36g,-79o,-1ou,aa,j2o,-hfd,5e1,8wu,cty,-8ck,-8ra,834,-9j2,52n,t4m,-2m1,-6cc,-d8o,18b,kf,5cn,-fy6,-3ql,26r,bwc,2ps,-7su,-57n,-136,-5ob,-57s,-1pj,-fk0,6v8,3fr,dw,-2g7,-73,7z8,2te,2rb,-be,4b0,5bj,5ov,-hs,2h1,53c,-c94,acs,eer,-43d,2v7,1of","h":"474,fk,ih,10y,1ef,ov,15t,343,181,2np,1kj,3wf,1vx,4u6,co4,1nl,10t,ly,9c9,y1,33y,7oo,tro,djn,4w4,154,6b3,2us,14k,1a4,89x,3zc,b86,yb,7t9,d66,63g,6bx,3cu,4w9,y6,48d,36g,5pz,b0o,ho4,6w2,2bc,35h,3i4,a7s,6z4,1j0,12c,302,pu,5kz,58c,47y,12r,19f,9tm,2dp,kaf,a7i,6x1,2jo,18b,14a,29j,1gi,28z,1mc,1cw,3zc,1zj,tq,5cd,546,enx,1uy,2vr,ed8,9z1,7pn,fp5,12ac,ngl,9m9,ozb,186,88t,8js,bbi,8t8,1r2,6ay,1ae,bep,gb3,44m,ksc,8lb,4em,1ep,yq,5j6,6rh,8p2,3tn,5nh,wd,uz,7p3,1db,56y,ktg,8od,16n,bbi,14f,1qs,bcw,ix4,10j,ip7,6jz,b59,320,1hm,6ft,2l2,280,gea,4q0,cjj,4r9,b5y,2vr,4me,v4,54q,320,2w1,4y2,21r,19k,1xb,4om,5md,go,4gk,16s,505,5g9,4sx,4rt,1tf,4qf,83t,pa,8ck,13v,96,qy,492,1dq,77l,8oi,627,5kk,nr,9f6,2zn,d20,1t0,b9a,11x,956,9om,5m3,1ch,tl,3kh,3hk,up,7if,6a9,e8d,6jf,8uw,x2,oq,ds9,9g5,ds9,12c,d8o,1cm,6iq,33j,y6,1zj,cui,61s,duw,7z3,1nv,1eu,o1,1q3,14z,866,9yc,1l3,azf,11d,p5,q4,35c,y6,7l7,4ce,1at,dc,7j4,3d4,7na,46z,1yp,1h7,ae6,qj,4w9,kz,5kf,6ze,og,19f,1f4,55p,74o,5ua,280,56t,8es,7d5,coj,168,8d9,x7,1cc,66s,7jo,3lq,4sd,9oh,bdq,3it,3u7,bo5,guy,9q5,703,h4y,1i6,a00,dwa,4zb,k6o,8x4,1jf,d5w,ayb,r6h,4pq,6hw,2rb,1ek,sc,iy8,8vv,2us,104,g3b,9s3,9wt,2sf,97e,alo,695,1xv,2h6,ajq,sr,1ue,bkj,15y,2vc,g4,88j,5zf,x2,1xv,16x,2du,u0,9eh,ws,29e,5hn,5i7,3y3,802,qo,1il,3cu,2jy,t6,28k,hi0,4dx,7ey,4g5,1dv,7dk,k0,1p4,3km,69f,2e9,6po,gj,ge,3um,h8,88o,3os,30r,2u3,q4,j1,1rm,ws,3jn,1ng,82u,6hr,2cb,zk,42t,y6,22l,xr,1tf,6y0,53m,t6,6q8,m3,3pm,27l,j6,d2,3pr,36v,15y,p5,rd,62m,xr,1mm,14u,a6t,2kn,ov,1d6,3ne,136,4k6,2ps,118,axr,84x,4xs,3t8,5go,190,tg,3n9,8gg,yl,t6,1ke,73k,mn,6zj,85c,tb,5qj,2yt,14k,4pv,eqf,753,8ca,uk,2ia,ar3,sw,1db,30m,172,4pv,3es,qj,3ur,e06,vy,2lm,389,8h0,915,1jz,ch1,9k6,z0,910,1kt,131,7ey,mx,3s4,agt,1ng,2oo,sc,o8i,2ad,9hj,2mb,9q5,29j,1cm,18l,5og,16x,md,48i,c9t,o1,sc,1vx,2rg,4nn,ua,2ki,yb,3xj,1s1,a8h,8iy,9mt,31l,19a,pf,307,eqa,2if,6ft,31b,ri,11i,11n,1b3,1iq,vo,5az,8j3,38y,45g,1ao,jq,2un,u0,5dh,21w,1tp,kf,ly,2w6,dc,18q,4ow,2br,2qc,118,a5,23a,5md,ka,71h,2j9,6qs,12c,pk,3ck,ku,57i,45l,5u5,4gu,4ul,9k1,35h,5tv,ayb,csz,jg,u0,339,j1,53c,zf,4rj,1gn,163,wn,1wc,4z1,u5,qj,1py,2ax,8k2,4vu,2lh,n7,2yy,3sy,42y,4zg,cs,2r1,ws,519,3xo,7fs,1y0,1qd,4aq,3hp,vt,go,1i6,221,24o,1ls,hd,t1,28p,31l,2gw,2x0,6ya,el,zz,24t,1d1,4sn,2p8,9qk,4hj,258,bzo,4u1,wd,1h2,9c9,1c2,6mr,8cz,2zd,1db,5dh,1b3,3d9,1vd,17m,2na,39s,4al,131,1oz,1ko,5dm,yl,eb,1ae,2b7,1s6,2c6,1mr,1hc,1mm,1pj,uz,27g,r3,jv,4av,1eu,j6,wn,226,4tr,3gg,mi,pf,1qx,1xg,640,17m,39x,2l7,7oj,1kt,5tg,23f,1ng,4th,jb,1ja,1po,75s,tg,1ao,4bf,7ud,1t5,2ml,57s,qy,5fz,190,2lw,7np,2o9,30c,b81,2ip,177,6ls,ash,md,11i,tq,ve,90b,vj,168,yg,7mv,6i1,3vq,ic,1iq,9v,pa,1py,tq,32a,11d,2x0,s7,24y,3yx,gj,60o,lt,4pv,33j,1at,nc,4al,1tp,ic,1iq,ff,56y,1kt,kp,1qx,3ql,r3,eg,26w,3od,1kj,3vq,jb,3it,k0,1il,131,339,2ip,h3,2df,460,14p,1vs,3mf,29o,og,ci,18b,hi,393,3do,o1,6oa,44r,vy,ir,258,2e4,yl,1nq,1ch,kk,tg,3b6,nm,5mn,11d,p5,1tz,3kw,3n9,u0,2x5,1ke,66x,1fe,qy,4u1,3a7,2un,63v,3hf,406,465,hn,88j,an7,30r,7p3,4bk,xc,48x,3ie,2y9,4vu,6fo,15j,159,1h2,1p4,n7,4u6,pz,2gr,7w6,a3h,jv,bzj,5z0,9hj,sh,2z8,8k2,8a7,6of,10j,2a3,s2,1dg,2ik,5yg,1vx,4ce,ceo,mn,h3,rd,3w5,kk,2xf,iw,31g,21h,fz,3od,15e,k0,cn,zk,1m7,2oe,4qz,58m,bb8,b54,6tu,uf,861,dti,370,hx,4d8,1dl,1mh,zf,8t3,9ec,7w1,1m7,9er,4is,ge,cdz,3f7,98s,6mm,3m0,q9,lo,1yu,1s6,i7,atq,l9,3vl,4gp,cee,2o9,b3b,tv,2nz,5cx,262,r3,2hq,1ou,4f1,g4,3pw,1uj,4w4,8fr,3qv,13q,d2,ic,zp,1op,2mg,172,2y9,2mv,sh,1fo,42e,1ko,6jz,3fw,xm,6e0,d0w,1po,fu,26c,2h6,1ww,4id,5h3,488,5pf,b8b,37p,7r1,zz,2p3,3zh,qt,6nv,4nd,3aw,6ju,32u,1w2,2eo,5ev,253,33j,rd,qy,2sk,ev,1dl,6t0,tg,12r,2an,1gx,2r1,12m,1il,401,3wz,483,97y,3lg,2hg,tg,ic,20d,104,ms,t6,62c,28z,253,2b7,ms,65j,2u8,46a,tq,3wk,2a3,136,61n,2vm,mx,1k9,9tw,3gq,1vn,2ye,2pi,32f,1dg,7xa,1f4,6m2,79j,2un,3ll,9di,7fs,4ab,adh,3p7,v9,1ay,5o6,5vt,9l0,154,16d,5oq,10e,nw,2ax,18g,81q,2zs,6vs,11s,17r,4kv,2t9,qy,2pn,aic,4tm,3fc,wi,4n3,1g8,6cm,2ad,7j4,5wi,2nz,w3,5gj,sw,4k6,pa,38j,1jk,oq,jq,5go,3ne,1hw,30c,2lh,42y,37p,181,39d,15e,7fx,2an,67r,6yp,2oj,7vh,s2,7d5,37p,5mx,4f1,lo,4pg,1i6,5sh,yg,195,2tt,84s,3zh,b8l,1uy,5vy,1py,cwl,rx,76h,13g,ir,3td,3uw,3w0,4ab,53r,lo,2k8,2ax,35c,186,hn,195,2xf,2j9,j6,mx,1x1,f0,177,10y,122,181,y6,631,18v,oq,1jp,p0,26w,618,27v,up,3k7,2dp,xc,s7,q9,39s,13v,9m4,46a,73u,d0c,17c,5og,2iu,2k8,4y7,cbh,1t0,ob,4t7,pf,2qm,6bs,9uv,6gd,1qi,kk,c5i,2lw,6zy,2oo,384,16x,w3,11x,1k9,172,44m,xw,2u8,127,7nu,ka,nm,38o,rx,3hu,8hf,qy,2mq,21w,2i5,12w,34d,28a,6yz,tg,99c,375,5og,3nj,3t8,yg,1uo,40l,1bd,7e9,1ea,t6,16s,pu,2bh,2fi,0,6fo,s7,2r1,113,rs,18q,5ff,104,1t5,5t1,jv,9pv,r3,1mr,f0,127,663,127,1ek,ri,kf,1tf,28p,15y,hn,sh,1yp,8w,2br,21m,32u,3ts,3dt,i7,15t,2lc,3kh,17w,xc,6fe,3v6,iw,ff,g9,pf,ci,tl,118,320,3hp,qy,cn,im,24y,2lh,bj,1ky,2kd,zz,3ru,4ga,253,3gb,38t,c3,2lw,1po,e1,xc,9b,cn,xm,p0,398,1ky,23a,285,33t,280,pz,3es,2gh,bj,xc,1il,5a0,5up,1ut,2nf,109,3rz,hx,53c,1uy,ak,249,c8,29o,11d,2iu,73k,d2,d2,11s,dw,hs,1bs,fz,51t,2ps,1ld,5ve,1nb,393,f0,17c,uz,10y,fz,nm,f0,26c,fu,1c2,wd,39x,up,54b,2to,4bf,i2,267,p0,r8,1mw,33y,18v,wi,4om,kk,12m,109,zk,ku,cs,45b,ev,3r0,2te,57n,zp,x2,46a,12w,1gs,xh,42o,172,3jn,ge,11s,4ry,190,1sq,465,3yd,11d,2g2,32a,3vg,212,eb,2tj,3c5,yv,zk,lt,25n,5be,1ta,1tp,5za,1n6,c3p,1iv,11i,g9,s2,14u,jv,285,2xa,3ah,v4,5mx,15j,92t,3xe,7n0,33e,6iv,122,sw,19z,i2,5k5,5dm,1ut,20x,8bv,tb,1a9,18b,1vx,sm,3cp,v9,t1,kk,n2,2qw,14f,2h6,1ju,4ce,f5,jb,13l,2nz,tb,9lu,2dk,sr,1cc,z5,5lj,53r,43i,8ts,2g7,1aj,19k,1ln,qy,9a6,5j6,4sn,vj,2pn,72q,451,645,2iu,2df,uk,dh,3uc,h3,7na,1fe,3u7,4er,3lb,1b8,tv,fa,36l,3ei,v9,2if,1py,gj,4u1,127,rs,kk,u0,19u,109,2wl,2hv,177,4dn,6ez,4hy,46z,875,s2,681,6h7,2qw,9gp,39n,x7,2g2,f5,y1,g3v,6ju,19f,fjv,t6,jl,410,asr,2iu,1j5,1nq,13b,iha,xr,2j4,ms,mi,v4,69u,2lm,906,l4,1ch,22v,965,7ot,3jn,2ty,2qc,5v4,5s2,hs,ly,3bv,g9,442,md,104,vo,vo,56t,50a,xm,12w,1c2,320,6sq,2ax,57x,jv,1cm,ri,1yk,1z4,3zc,47j,7ui,3fc,4ul,6zt,429,3ie,lo,p5,6a9,7l2,46f,mn,44w,1ay,1mm,hs,u5,1tf,3pw,4l5,16x,3yn,29o,1fy,3uc,33o,27b,3z2,1gd,7hq,sh,2jo,2jy,1u9,uu,433,10y,1yz,akz,tb,2kd,4kl,1cm,1iq,57x,16x,2yy,by,24o,51t,9q,19u,uk,rn,4zq,42e,2vr,3vg,pf,n7,5mx,1ay,fp,xh,1aj,2a8,1h7,1qs,776,md,kf,14k,l4,2wl,bo,fz,1ao,jv,fz,4ce,bo,l4,f5,uz,1xb,3xj,299,59v,13l,4hy,1bn,34n,2ai,lj,m8,g4,20d,2hg,im,1zt,v4,uf,34x,3ny,2bm,yq,1qx,109,672,5nr,a5,lo,1qx,1ls,6py,1xg,4z1,6gn,3b1,37u,267,53w,27b,yv,g4,4wo,2l2,29o,rte,24j,613,2n5,3bv,12m,b6n,48n,15y,6xb,3a7,gy,pa,2e9,tg,pu,1h2,22g,5nc,mi,aiw,15t,ge,834,52n,3se,375,10j,1jk,5xw,2b7,y6,154,k5,32p,hs,dh,ebp,50u,clm,ctt,1vi,mx,17m,168,1mm,2xa,go,11d,e1,3wa,3y8,ka,5fz,8sy,uz,ge,5be,4lu,1ue,qo,o6,1cr,dw,hd,1mh,3no,27b,181,4s3,tq,u0,11d,ka,1gi,23u,1gd,2rl,hi,1o0,37p,39d,og,2q2,8n4,163,gy,31l,11s,az0,325,8ah,1vx,2j9,53m,2gr,6zt,23k,ws,4y2,1ay,4xs,b8q,31q,21r,ol,pa,1bs,5ly,sc,ku,yb,nr,21h,23p,1sv,2zs,18l,2g7,3vb,tv,kf,27g,5nr,ov,yl,ci,5kp,1w7,yv,27v,56e,2qm,pu,4tr,3v1,8ca,80c,1mr,49w,7jo,1rc,9e7,410,15o,2y9,jb,7jj,8ny,2m1,2j9,1jk,n2,tq,163,56o,fgy,3se,oq,1g8,qo,4f1,3ru,2jj,1b3,1k9,y6,yb,zf,2dk,14f,5gj,13q,ehe,3ck,68b,5c3,9s3,50z,640,686,1w7,1mc,1a4,4or,1y0,1ef,54b,8st,2yo,5nw,7vw,yb,311,17c,xr,f5z,1j0,adr,537,4al,v4,fl4,2cg,1hh,4qf,buj,4ec,4fl,6jk,3bb,c4y,5jg,0,4l5,1bn,l9,2ki,18q,k0,jl,l9,7as,442,78p,d9d,72g,1k9,889,8c5,9b5,1q8,5a5,3p2,131,2dp,i4n,51e,2kx,ku,feq,1i6,xh,1at,uf,4sn,1bi,1yf,2d0,5j6,31v,mx,3ie,sh,2lr,g4a,7u8,29o,5vy,6p9,2oj,258,f96,za,3do,14f,3hu,y6,1zt,19f,1ay,4o2,1xv,249,up,qe,27b,2nf,zp,uk,3wf,7ad,5jb,19z,xc,20n,l4,md,2jy,1ld,91u,sw,50f,57s,a4g,4ns,hx,2v2,18q,1m2,3q1,1ue,1d1,2f3,7ej,78u,7iu,5ol,w3,442,4kg,1ya,9x8,1pt,jdd,3g6,anw,14p,6xl,5ku,b1x,b8b,1qs,bk9,ba9,2ip,249,2g7,5tv,le,3xe,14z,5n2,u0,g68,2un,208,7kx,6f9,og,4fb,qo,25x,vy,578,3a2,7sa,1fj,2f8,up,mx,m8,2i0,3am,2ip,5uf,p5,2xa,58h,672,ri,325,5uu,5uf,3qb,1qn,7un,1rr,zp,2hl,1rm,8m0,xr,3w0,26h,2zn,10y,1a4,2df,1bx,3p7,3pr,31q,4mo,5d7,6yz,o1,758,12m,be,1ze,nr,5q4,hi,4n8,fa,24y,xh,10o,3qq,pk,pz,ba9,3lb,4mj,889,2iz,36l,60o,27b,58w,9xi,8ox,24t,cgw,9em,uf,3xo,33j,3es,xm,3fm,9bf,4g0,43d,131,9o2,1y5,4bz,hxa,45l,1j5,c2g,16d,1sv,18q,1dl,a73,5ka,4wo,1sb,8ar,10o,vy,n7,1l3,389,k0,4pb,2lr,3gv,6j0,pp,5m3,pp,pu,10y,sr,ad2,4ba,ir,30w,23a,fp,a9q,1vi,6i6,13b,kk,nh,13v,ge,2r1,54g,1ut,4bf,wx,uu,b63,311,1ue,b1x,39x,38t,f5,l4,pa,3ex,17h,53m,10j,3t3,x2,75s,4u6,6wr,za,hi,113,kz,1nq,44m,2qc,tb,36g,2lh,276,181,5dr,7df,14p,20i,ic,32u,1xl,fp,2vr,2o9,163,xm,203,1fe,nc,1ko,26w,253,3ie,1ut,2bm,kf,ff,2df,hs,44c,61s,vy,b9,5sr,lj,fa,46p,3so,nc,2gh,5rn,4ym,6zo,3vq,hd,xr,3v6,8uw,p0,xr,32k,3bl,1ch,2ai,4aq,qj,tv,70d,3w0,14f,hd,2jo,2z8,145,lt,3wz,lt,5l9,2f3,10t,q4,58c,186,34n,3u2,1zy,451,6oa,4si,1ou,g5o,208,jq,14a,4v0,5iw,20i,2us,8ck,1mh,7bw,k0,325,24o,18l,25s,2f3,38t,qo,17r,41z,3cf,2qm,42e,5f5,2zs,181,3es,5ly,coe,dwa,7lh,5i2,48d,ddj,1aj,1ou,4kv,m3,1ig,49c,r3,4gu,5le,10j,2qr,6tk,q4,10o,4m9,jl,3mf,5ku,311,267,37u,3yd,573,2ud,4ro,ws,52i,ku,v4,2ia,22l,25s,ol,4v5,22v,eg,n7,rs,4om,12m,3b6,3ca,rx,5qe,z5,eb,rd,2fd,2ax,5fp,go,1sv,ka,109,35w,1po,3bg,27b,1op,267,6f4,gj,5rn,jl,zz,2m1,3ah,492,2pn,15o,75n,qj,c3,2dz,2iz,1g8,36b,2rb,1of,d7,4i3,357,20x,39x,zf,1yz,3tx,qo,pz,q4,1dv,ku,ob,go,410,3es,fu,3bb,401,1li,8p7,1b8,ku,4yh,kp,78,163,1xg,2z8,2zn,2nf,fz,730,1wh,1pe,kp,26h,2ud,ap,dr,j1,4lp,609,4ns,4ry,5i7,11n,r8,2j9,tv,26r,1fj,1jk,xm,5kf,14p,375,m8,2d5,3n9,pp,3cf,258,17r,1rw,1at,5b9,5ly,80w,2et,5j6,15e,p0,2vr,gt,20n,1f9,uu,3e8,ol,ff,22v,y1,4ho,f5,3st,q9,17h,3lv,eq,79y,w3,og,12r,4cj,57i,ol,2da,84d,4rj,5l4,4p1,1v3,ih,3d9,27b,a14,4uq,f0,1vx,zz,71m,1xl,k0,p5,5tv,ua,16n,2p3,280,1qs,ci,429,32u,2an,1fo,2f8,2b2,2us,a2x,6s6,1j5,eaq,1k9,51o,2rq,1t0,4f1,qt,230,1bd,6d1,md,1vx,xm,1cc,1z4,51o,316,2bh,3hk,wx,3bq,1lx,2i0,uz,294,pk,2zd,ago,69a,4la,1sg,8fc,4qk,4fg,1cm,4mo,uu,2gc,21c,1yz,154,l4,316,2fx,86v,bn6,3yx,2ai,4my,18b,eg,jb,6mr,7zs,1uo,32p,488,p0,3vl,2lh,mi,12r,4r9,4dd,m8,7w6,438,4ns,ms,k5,l4,1pj,1sq,118,pf,366,4ry,145,5fu,xr,oq,pk,1uy,203,36b,5ih,2dk,7r1,ezv,2sk,7ee,ale,4pb,1y5,17r,6x1,5lo,ce4,8k7,5bj,27l,159,md,sr,5yv,3ah,56j,5e1,etm,6vn,24y,5e1,y1,3zr,q9,4m9,bnv,a1y,2ey,5k5,76m,2ad,zp,1tz,3g1,n2,sr,bop,ih,1gd,1ez,1qs,uk,v9,316,ws,wn,58w,j6,1eu,451,1qd,38t,tg,24e,1il,550,35r,6cc,s7,357,1w7,5bo,ff,26h,9tr,3t3,7an,627,83o,1ou,7yo,1n6,1rm,1mr,6h7,2nf,24t,5af,axw,334,122,3tx,ws,4wo,122,2tj,1z9,19a,2cb,63g,r3,5aa,163,5ak,2sa,8sy,6ke,ob,631,118,k5,2su,3de,kp,qt,26r,492,41p,6dl,t1,7dz,3t8,1jp,o1,pa,1xv,1fj,e1,nr,qe,3f7,6hw,k0,34n,31q,rn,1w2,3st,3wf,1c7,500,17m,11n,u5,2xf,3ny,p0,1oa,4qa,1p4,3mz,d2p,6ch,52i,1yf,12m,aeq,et2,u5,md,6q8,a87,7je,fpu,fn7,10j,72v,8mu,7zx,23z,a3c,bzt,has,3vq,7g7,1pt,7te,1jf,12c,1jz,ju6,5wn,clm,5t6,532,37u,7ml,1vx,6ou,q4,4qp,45v,2oo,5f5,1e5,2nf,clm,127,5t6,2as,zz,ve,6j5,5hx,97y,pk,qj,28f,1vn,3iy,4fl,1nl,2xz,9di,u5,5fk,1e0,14k,3mp,sm,xc,im,1dl,u5,g6d,960,1d1,474,2lm,4pg,11i,7xp,axw,122,4y7,19a,16d,2wv,49c,5fk,s7,2x5,1yp,1n1,1z4,235,8qq,1ao,bnv,b0y,2xz,4i8,jq,6xg,17h,1q3,s7,3ra,7j4,38y,64u,7k8,3ll,4qf,96f,956,1bx,1gs,ri,jg,44h,a9l,5nc,140,kp,pu,2dp,11s,zp,1hc,tg,33o,4n3,58r,vt,2pd,8xy,370,11i,7sz,1fe,hx,5bj,18v,915,4zb,1tu,85w,x7,7dz,rs,12m,13l,1u4,7z3,a8c,5eg,14u,byf,mx,mi,4zb,4ix,2na,ca3,98d,4b0,55u,bq8,5ly,a0k,1vx,1gs,1b3,dgl,3ma,tmy,15e,2i0,2as,5go,1qx,8zh,14a,5ob,f4l,22l,41f,2oj,4c9,1c2,6tz,d9i,2r6,8kh,wn,80h,46z,1dv,1vi,5dc,6e5,1gx,jv,271,1qi,d5w,ggi,221,7bc,18q,6pt,2bh,kp,1h7,66x,h26,40b,56e,6tp,8fh,1sq,9e7,e1p,23u,7gr,6e0,2k8,5fa,99r,1z4,5jg,gz9,3rf,1lx,76c,4kq,8wu,cvm,2k8,yl,2t4,6g3,5m8,1hr,d34,136,5kk,u5,1zo,1h2,7mv,nr,3so,e2y,3fm,au0,8b6,7ax,55p,9mj,325,69k,2lw,ezq,4co,hej,8ah,n2,4jc,4gp,64a,2ml,1bd,zf,1rh,9q0,3ny,7hg,4v0,3hp,1qn,32p,57n,24y,3ox,4rj,2ud,pz,9q0,1hc,87f,1tf,618,4re,1g3,31q,4m4,456,tv,7b7,13g,l9,71r,6v3,5qo,vy,4ug,agj,3fh,7fs,109,2lm,xr,686,1db,18l,o1,1pe,1vs,5c3,7bw,z5,2d0,62h,32a,le,307,ect,7nk,1ig,mn,474,ms,x7,wx,2l7,2jy,fw3,4n8,947,o1,1ue,7j4,8bb,33e,8u2,awx,rfi,38j,i2,p0,1qx,4cj,5k5,4yw,2cv,3xo,aa5,8s4,2y9,og,5hn,e4r,6kj,82z,2cv,e4h,n61,307,85c,9aq,3it,n5m,6ou,yro,fr8,v8g,xp7,1etv,o2o,am3,16d0,i7a,4jm,8aw,t7t,mr6,67r,psm,l1n,23k,tjr,19p,94c,px2,4pb,4f1,9yc,4uv,1qd,2ai,azu,7bc,1ta,3l6,28z,iio,ixe,5v4,62w,a4b,fhi,3f2,fi7,aob,3ij,pup,bo5,23p,5ku,8ij,a8c,1gx,1mr,1fj,84x,19u,8uh,7b7,2r1,cfd,iv6,2ik,g7h,1sb,a05,a73,9g5,1ib,25s,6d1,122,j4h,5mi,22l,1yz,7mv,1b8,3l6,1uj,3on,13b,ayq,1t0,3yn,71r,bfy,g59,16n,2g7,17m,1c2,852,1vn,2et,76w,1bs,aov,f9g,5xr,cud,1b8,9kg,4dd,1dl,56j,3xy,11s,4jh,eht,1jk,19f,40b,3st,3ma,2dk,451,xr,4he,2yt,vdv,6fe,1iv,4fq,94c,20i,992,1jz,154,28p,9xx,13b,11n,5hi,63v,lyu,bgn,9uq,g6n,1q3,ws,6ek,3ox,wd,5ri,1dq,1v8,5hi,1vs,712,456,20n,qmm,23u,1y0,41p,690,3bq,3es,die,qt,ff0,5nr,87z,4cy,1r2,1mr,u0,1at,104,zk,1l8,3vv,18g,3ql,4m9,tg,ere,2ks,39s,1uj,m6h,2e4,54b,1hr,14z,6dq,1nq,ua,3a2,1j0,1y5,51y,31b,1ok,qt,2if,y6,yni,1zj,1ez,1qi,xm,2p8,15t,3bq,2f3,15t,18q,7jy,96a,1jp,11d,23k,6tu,1po,e6f,dq1,1x6,1of,clc,j4w,jgk,kv9,686,pmx,497,6gx,636,1e5,6z4,3ei,bek,4rj,168,66s,1yp,94m,84s,a64,ciu,psw,bbi,22g,63v,u46,3hp,334,24j,9ds,bwh,byf,271,3d9,nk7,96a,aw3,i5h,ohj,3ex,24e,4xd,fnr,jce,528,2eo,9ht,181,gd1,7dk,4or,8ij,6g8,qd6,1uy,18q,65t,1rh,hsf,1fo,98s,5le,14a,1ze,bj5,hb7,32a,hia,1jp,1h2,32u,1w7,3st,9ub,5jl,159,28z,7yt,cmv,14u,4in,6l8,1f9,3lq,2mg,1tf,6mm,1n1,14z,4vz,1ok,2zi,cqm,11i,2sk,v4,2hv,8qq,60j,613,1ft,9ho,dkw,2dz,t1,7sf,6qx,92o,5tv,18v,w8,7ej,12m,c6h,361,7gc,nh,1t0,267,2zx,6iq,7fn,tv,3dj,5be,afa,4he,302,7p3,lj,18v,2f8,48d,7lr,4tm,63v,4cy,uu,14a,217,12r,a9g,4k1,7et,1qi,604,3m0,1at,1kt,1n6,bja,vj,19u,3zr,5qo,2b2,sw,1s1,4in,10t,15y,g18,hfd,19f,4x8,1m7,7ad,6tk,co9,5fp,9kg,1xq,4lp,uz,ies,56o,3ll,7eo,1ae,2s5,xw,53m,ebu,esi,fwi,fdr,8y8,38t,a46,pq9,iuc,1vx,9ii,cb7,2df,1hh,59v,3ed,7jj,1k9,7rq,aap,9kg,dy8,tzq,3vv,ebf,262,pdr,88j,qch,3k7,1fy,mm6,nhu,5s7,159,21c,1s1,kxh,3yi,a0k,a3r,o5b,hfi,crv,177,3jx,bpt,1zo,1b8,5kz,4my,3lv,1m7,1q3,1i1,40l,74e,13b,1yu,17c,145,2eo,11d,icu,eq0,eem,6z9,yqu,2eo,5kz,kyb,5ev,3ij,14k,h1r,7ty,oxn,32a,113,2lc,668,jt2,1qn,czs,ao6,82a,b54,4cj,c5d,zaa,6z4,1p4,5lj,kwi,g95,6a9,16i,5ly,cj4,4xn,1a9,kff,yv,4fv,i6v,1gi,f6j,5bo,ay6,10e,1ez,1vd,7c1,2kd,4q5,anh,77b,bez,4i8,816,50k,ei8,4y2,ogk,3vv,1pe,b27,7qr,1s1,5ku,5z5,l86,1sb,z4l,kap,5mn,7ux,coy,bp9,i1v,n9d,agt,1xb,cb2,dj3,1ay,ffk,amd,f8r,2na,1ef,2mq,870,9r9,1f4,g63,370,5gy,c71,14u,9he,8mf,9pq,726,12rz,88y,2hv,5a5,bqi,5jg,3uw,7d0,38e,4tm,8gv,38e,1b8,gky,1nv,1cw,48i,2if,7r1,ddj,a78,1db,q9,1gn,56j,1oa,2j4,5sh,bqx,wd,1e5,14f,190,3g6,1hr,8dy,5xm,1tu,2f3,4ni,21m,12h,1oa,x7,i1b,fdr,3ph,1fy,fqt,9sn,56t,1ez,bsg,820,1c7,8ex,217,oq,758,3es,1ep,6rw,gvn,mbc,3gv,7y9,9ab,767,oag,dwa,d1l,dt8,g1n,75n,hje,104,7hg,1r2,30r,lgx,1g3,7k8,ckd,1aj,35h,7cv,1k4,78p,3m0,byz,3mf,40q,tg,2cg,7ee,44w,1dv,42e,ar8,5s2,z0,5fa,1w7,2ia,5oq,6pj,7wb,1d1,4hj,3io,1pj,3z2,4mt,4ga,5sm,6mh,24j,xr,8bg,17h,cyy,1vs,pp,2rg,id4,d9n,v4,1ig,l5t,ero,ist,5d2,1b3,3wk,2zi,ccb,1d6,1hw,ffp,9vz,ei3,33o,ggx,681,6rc,3ar,by0,1g3,1f4,3nj,938,3ed,6ef,g3l,lmw,4n8,5ob,rgm,3cu,195,4k6,6x1,230,1t5,1kt,8h0,1wm,1ep,7mq,6y5,cbr,7ks,gu4,8e8,ac3,4jm,aj6,1at,9k6,3w0,6tu,xm,e3n,2z8,szc,dzr,igg,5xh,3j3,618,1k4,49r,9wy,coo,84i,8hp,3i9,1op,2bc,11i,31v,5el,21h,113,13b,c1r,87p,3no,4mo,30r,uu,2y4,13b,19z,1v3,2ik,21m,wd,bez,1qn,61d,wd,75i,25n,4mt,b95,9th,cwl,14u,1lx,5jb,89s,1b3,pk,3a7,27g,5d2,753,320,3km,1tz,yv,b27,8ql,2h6,zf,12c,86g,2zi,9q0,1rw,1gx,8wf,70i,2dp,wx,30r,z5,1qn,3hf,1s6,15e,ess,663,5ua,9is,btp,2dp,1ko,5f0,1fj,za,azk,8io,3rf,3ne,g0t,3uh,1gn,4sd,bpe,c1c,1op,1sb,4wj,zz,67m,9zl,2ey,1db,7fi,4wt,2hv,3mp,25x,f9b,5ov,4ow,2px,84n,adc,1sl,19f,xr,1yk,rn,3n4,ws,91f,22q,4zb,2bm,4sd,bil,87k,9lk,4lk,2o9,13l,ira,6sb,7ad,1oa,2eo,1pt,5ws,25n,25d,3sy,46z,3tn,2y9,d3t,4em,3y3,l86,hdf,e8d,28a,1cw,bw2,88y,38o,3it,v9,1ao,1m2,5ak,203,1oa,3x9,1db,8hp,5q4,4th,3iy,122,5n7,2xz,23f,md,1yz,1tp,181,ov,1vd,33e,2ty,28k,a5a,1tp,26c,2r1,4y7,40b,y65,2ki,366,2rg,1mc,1r7,302,74t,6xg,cbh,235,2zs,jd3,duw,1sb,64a,2lm,1ea,735,lkj,5yb,3pw,13gp,26w,87k,1z9,mg7,17h,age,l2c,ev0,1p4,9h4,mm6,1oz,gn1,1tf,2dk,3bq,25n,4yw,1ft,ezv,2pd,6jk,66i,1ja,lg8,5zz,14f,2q2,4oc,1sb,2h6,eyr,90l,ynd,4gz,7iz,58w,cet,730,5bo,6h7,5aa,5eb,ela,58r,3f2,6o5,81v,1ue,2e4,9p1,1ou,fz5,byf,52x,pih,2if,311,64z,5pp,4ag,fgt,yg,dru,4t2,olp,b9u,f5z,53r,r0x,5ve,24o,410,7hg,26w,2s5,4sd,2g2,203,5ci,drf,8io,9bk,gr2,9ht,5rs,2rx8,3v1,6uj,2bh,bs6,9m4,96k,6c7,1ww,1mr,bf4,4ec,ct4,1k9,2j9,1mm,3bb,clw,1p9,8oi,1qx,7ml,30r,1ut,sw,ajg,6ou,6y5,3qb,3q1,2ui,ozq,6mr,7zi,703,1jp,212,cml,8tx,2kx,578,acs,mpx,u3h,33o,h8u,415,9pg,h1r,42j,1r7,53r,2qh,1db,4b5,2px,2k8,49r,5yl,35r,2i5,48n,389,1c2,a23,ofg,1mm,6wc,f2d,3fh,5pk,4s3,1s6,82p,f4v,4hy,1b3,5hn,27l,2ot,7lc,ozl,8ji,u1j,10at,qsl,2dp,jga,ago,4yw,2gc,bxq,9f6,lkt,2hb,f7s,vmm,d0r,69p,k0p,bu9,1d1,c53,cw6,4xi,oss,17r,44r,ngg,9vf,f32,rnz,o9r,b1s,bt0,k87,c58,3rp,a05,bhc,659,xaw,4fb,1z9,1v8,85r,biv,5nh,6mw,587,3ur,9rj,1uo,8pw,m8a,f3c,43s,10wm,8yi,asw,81q,9oh,kv9,3h5,65y,2xp,esi,10ke,6qi,4uq,cks,cqm,joc,6uy,67h,65t,6uy,3kr,uzp,13g,51t,jom,dra,dxy,1k9,5lj,2yo,bli,1l3,1ta,8kc,d4s,adr,efg,ok1,7o9,fqy,frx,14u,3n4,915,tq,9ni,8um,5zz,59l,p4l,az5,1q8,4g0,wn,69u,gp9,1v8,88y,cet,59l,1ta,2jy,20d,41a,3w0,fi7,j9h,47e,a0p,utl,1d1,4co,nxt,74o,cg7,5d7,7cv,32k,15o,1li,4xs,5tb,2cb,7sz,p5u,21w,9e2,4s3,iph,519,a19,2ps,ddt,c21,1ju,uih,7rl,46f,3vg,92e,p6t,a8r,9v0,4ba,60t,i9i,8mk,4jw,8ql,2x0,nck,1ut,bhr,21h,4e2,7c1,690,nrk,2rb,1l8,9xd,age,5e1,1u4,6ke,l3b,1p9,19a,19k,br2,3zc,bxq,e24,pp,276,1yz,5lo,d0w,dbg,5b4,3t8,3c5,9si,dlg,1li,9ce,11s,e7j,ddj,g2m,20d,3n9,ein,gvs,11i,6g3,7i0,2xp,h58,17w,gls,3hk,39n,b6x,2gw,2xz,5e6,gkj,45g,g0o,fkf,b8g,tb,dma,1p4,j0l,71r,8o3,1sg,4tw,2gc,1yp,5cd,1py,195,1yf,7ui,9zb,74o,767,fkp,gi6,c2g,9ba,2fx,tb,1eu,8os,baj,1ch,3i4,32z,cpx,37k,33e,5j1,6ep,52n,gf4,bhw,32u,852,3e3,bwc,hvh,32f,en3,d2p,4jr,63q,1lx,4j7,a5f,2br,tv,98s,1p4,47e,8kh,e56,bek,rd,7bm,604,bkt,9g0,67h,4z6,18v,gtz,6hc,emt,1vd,tl,1j5,9b5,8j8,6p4,22v,n2,4co,79y,7v2,cpi,2xa,4i3,3xo,vt,9he,7cl,3kw,js3,juq,1rm,cxa,9qf,dtn,58c,r76,b2h,b95,n3e,5hx,29j,311,3v1,1bhl,1iq,1bcl,3a7,8v1,sh,48n,46u,4ab,7oe,cad,13l,30c,o6,x93,74e,4id,gr7,d4i,5w8,mz3,9jh,9er,6ta,jbp,3v6,398,xcf,eyw,qc2,76w,5u5,6il,t1z,hsp,q5t,b6i,c9e,sa2,tj2,k7i,5c8,2bm,2bw,258,gn1,1t5,4zv,3ts,fr8,1ez,8xo,1xq,amx,akz,nrp,2xk,ecy,c49,6xq,d6q,3ru,1yz,bzt,5zp,e0g,t60,d57,6rc,f3w,3iy,coe,2gm,fu0,8z7,1r7,dl6,5v9,z41,r3a,5nw,465,3rf,bjp,b4u,2vm,g8g,csp,1qd,c5i,11d,1qi,1n1,2mq,50z,o10,5a0,fv4,den,d3o,3ed,1gd,8a2,26m,a78,w8z,d9i,1nv,3rk,83t,ay1,8rz,2jo,24o,5qy,d4d,9cj,4bz,17h,4b0,2kn,1zo,3j8,0,6v8,433,361,4lz,2v7,843,2vr,2rb,30w,5l9,8ur,7an,2ki,2h1,78z,0,d6l,fxw,z5,3q6,6qn","l":"-ws,-4zl,-e1u,-21c,-80h,-7c1,-4om,-s7,-4gp,-1x6,-57s,-dmp,-6dg,-1nb,-4nn,-p6e,-8qq,-7rg,-1z9,-jbu,-6ww,-yvk,-69z,-8rf,-8q6,-mwl,-5x7,-7ot,-ekv,-f78,-2ot,-31b,-299,-gtz,-24y,-21r,-2xp,-40g,-ars,-80c,-icp,-19p,-6wh,-12h,-1xq,-2bw,-9n8,-78p,-9gz,-3a7,-1p9,-1qi,-a1e,-8io,-1e5,-66d,-2oy,-64u,-2vh,-ak5,-bvd,-1d6,-2ip,-2t4,-2g2,-5qt,-1tz,-ghw,-6cm,-1n6,-4gk,-3d4,-2nu,-95b,-40v,-7cg,-6m7,-541,-357,-131,-6r7,-2oo,-1m7,-8hk,-2je,-26m,-hvm,-ys8,-o24,-2wl,-qvi,-fo6,-4ab,-1yf,-546,-hh6,-bez,-5h3,-51y,-1hw,-6n6,-44c,-1dg,-762,-juv,-faf,-42y,-1g8,-2xz,-5jb,-1dv,-b8b,-5cd,-1ft,-4gz,-9nn,-1b3,-3yi,-5pz,-7nz,-dvq,-a9l,-1bx,-3cp,-ao1,-1mc,-4z1,-339,-5el,-k46,-1k4,-4oh,-b8l,-2d5,-8js,-zk,-2ks,-13q,-a7s,-2gh,-64z,-xm,-3wf,-d7z,-10t,-5az,-69a,-49h,-1hh,-nm,-8on,-t6,-8qv,-rx,-2d0,-qt,-2lr,-2n5,-1hh,-10o,-7ml,-131,-65e,-8x9,-3yi,-2if,-5bj,-14z,-g9,-1bd,-11s,-6dq,-2ks,-2tt,-21w,-6bi,-1mm,-auu,-11n,-6w7,-668,-4ab,-bdb,-1zj,-2sk,-71h,-yq,-16i,-12r,-35m,-2p8,-cax,-6mh,-1ch,-1gd,-1fj,-iwu,-3xe,-988,-25s,-74y,-cto,-3zw,-2nz,-2qh,-1z4,-21m,-9kl,-csz,-6oz,-7vr,-hr6,-3oi,-14u,-3uh,-2da,-9fv,-3no,-dq1,-2i5,-9sd,-11x,-2br,-51y,-70x,-21m,-2gc,-q9,-10o,-3zm,-3vq,-yv,-64p,-1cc,-46k,-q9,-xr,-9zg,-56y,-cey,-26m,-1t0,-9kg,-3u7,-1dq,-1cr,-26m,-92e,-c03,-2lh,-ies,-frx,-1ld,-p0,-3i4,-2jt,-15e,-5m3,-fwn,-6wm,-11d,-1ln,-5dc,-e7o,-690,-gt0,-23f,-12h,-d2k,-253,-4xd,-92j,-113,-208,-4jr,-ky1,-50z,-elu,-c85,-c4e,-1uj,-2i0,-8pm,-dhz,-1hc,-44m,-2fn,-83t,-1gd,-1bi,-3vl,-but,-5qt,-17w,-8ei,-500,-118,-6py,-3fm,-axh,-109,-5ci,-azz,-4is,-8e8,-4vu,-61x,-u5,-anm,-36g,-vy,-w8,-19k,-yl,-8fm,-65j,-1ok,-1xb,-50k,-4di,-2hg,-4ub,-1w7,-1v3,-6pe,-2p3,-81l,-212,-2z8,-18b,-2i0,-1ay,-6n6,-6h2,-27g,-7rq,-gj,-2e4,-1q3,-1y0,-4z1,-65j,-3ar,-3pm,-i2,-3z2,-q4,-10o,-31q,-1of,-23f,-4cj,-28p,-45b,-49c,-15t,-u5,-2kd,-z0,-686,-1cr,-3bb,-7x5,-5t6,-1g3,-39x,-2rg,-2ks,-a8h,-1v8,-4pl,-7ps,-42j,-17r,-47j,-7ax,-bko,-3hp,-ey2,-2p8,-3ql,-dar,-16i,-1xv,-2wl,-4bf,-2ks,-8qg,-609,-2oe,-u5,-89x,-diy,-3bv,-19k,-55f,-2x5,-1jp,-bc2,-1xl,-4b5,-5p0,-1e5k,-bmw,-1z4,-wi,-6dl,-2i5,-1vx,-ceo,-6ch,-8ck,-64u,-5pf,-40q,-974,-1xb,-1y5,-ec9,-7zn,-3z7,-1bx,-140,-8mp,-1sv,-299,-88y,-113,-807,-5ri,-1li,-a5f,-339,-1tz,-71c,-4my,-9o2,-2gw,-3ll,-1dg,-366,-23a,-49m,-ale,-8ur,-1zy,-b68,-9lf,-2ia,-1f9,-938,-4wy,-3do,-2p3,-75i,-7hb,-505,-785,-2xa,-4ym,-212,-1ch,-2x0,-5l9,-7ki,-bat,-1li,-10y,-6nl,-34x,-4k6,-9va,-861,-5xh,-1of,-3bl,-68v,-23a,-1wm,-2g7,-yq,-7px,-7zs,-1qs,-2df,-vy,-2xk,-1q3,-6gn,-4x3,-1ng,-3en,-3bq,-zu,-6d6,-24y,-3on,-654,-217,-v9,-87f,-zk,-1nv,-tl,-8e8,-4xd,-2g7,-3rz,-ws,-x7,-1jz,-12c,-qj,-1bs,-38t,-xr,-1v8,-1yk,-b90,-byf,-2ey,-8de,-1o0,-aby,-25i,-4ce,-4xx,-40q,-109,-1ya,-98d,-3yx,-2ux,-2as,-1i6,-af5,-6z9,-6ez,-vy,-1xq,-235,-163,-6vd,-1ng,-3uw,-28a,-177,-154,-33t,-27g,-o1,-o1,-2ia,-bxb,-3t3,-xm,-pz,-2hq,-50u,-2qm,-1of,-1ez,-rx,-1o0,-q9,-4yw,-244,-r3,-3ji,-jg,-1ke,-o6,-69f,-1x1,-1jp,-39i,-8yd,-5lj,-18g,-7s5,-104,-212,-6k4,-442,-pa,-5dc,-1e5,-4yw,-4co,-131,-31b,-t6,-2ui,-1uj,-1v3,-4xd,-6at,-5ms,-2et,-1ld,-2gh,-jv,-1v8,-2ey,-15e,-24y,-5l4,-483,-2fi,-1ze,-1ef,-2gm,-4fl,-1nl,-4om,-uu,-12r,-36q,-5xw,-13q,-2a8,-13g,-4la,-154,-1n1,-n2,-1xl,-3ar,-1ok,-14k,-3q1,-2np,-1s6,-jb,-104,-31b,-1u4,-za,-11x,-5a0,-43i,-2kx,-cvw,-qt,-4gp,-2dz,-1qn,-785,-38j,-vy,-1sq,-6ut,-1ky,-1ke,-8hu,-852,-4pb,-3on,-pf,-42o,-6yz,-3dy,-2an,-1j0,-1k4,-690,-34s,-5zf,-3yi,-1f9,-59q,-1bi,-6p4,-fa,-2p8,-2s5,-pf,-4ub,-1kj,-7wq,-1hm,-vy,-rx,-4fv,-l9,-48d,-49h,-2f8,-3aw,-145,-1ef,-1i6,-1xb,-140,-2cq,-5dr,-12r,-q4,-1t0,-ve,-23z,-1f4,-677,-10j,-31l,-b4,-ly,-42y,-16n,-nw,-3e8,-2to,-1m2,-ev,-4uq,-4si,-1c2,-1uy,-1a9,-r8,-1sg,-1aj,-1xq,-44m,-5b4,-13q,-fz,-7ik,-2hv,-33e,-2gr,-9bk,-2px,-5az,-zu,-4c9,-7d0,-3n4,-3fr,-23f,-56e,-1c7,-2y4,-wd,-54b,-8q6,-14z,-253,-2x5,-zk,-2t9,-2b2,-2jj,-b4f,-1i1,-y6,-70d,-1h7,-16n,-8zw,-1wm,-v4,-kf,-1xq,-1ig,-67w,-2j4,-1wc,-122,-6d1,-lt,-4h4,-hx,-14z,-15e,-6cc,-1ea,-73p,-217,-839,-8h0,-2hb,-1hw,-4r4,-5t6,-7a3,-7cv,-2ee,-27b,-tb,-2ud,-1xq,-1v8,-aic,-8mf,-49r,-21m,-78a,-3m0,-34s,-21c,-16s,-5i7,-jg,-127,-4fq,-31q,-2dz,-sw,-1oz,-1ch,-203,-1mc,-1ou,-4ba,-bq3,-168,-15e,-2d0,-42o,-276,-5y6,-1p4,-3ie,-ir,-pz,-424,-6vx,-168,-19f,-8e3,-226,-1gx,-pf,-25i,-28k,-a7i,-8xj,-5lt,-1nb,-6ep,-1b8,-852,-2gm,-r8,-1k4,-5go,-1wh,-bh7,-58r,-14p,-47y,-4bp,-44r,-203,-2m6,-7i5,-5v4,-2ps,-vj,-ka,-19z,-2wq,-61i,-212,-776,-3ed,-4al,-2lr,-492,-17h,-5t1,-46k,-1rr,-1i1,-1jk,-lo,-dkr,-1ea,-j1,-3ny,-73k,-1kj,-1cm,-5xh,-12r,-nm,-3cp,-11s,-sw,-2mv,-190,-63g,-3ra,-226,-339,-rd,-5lo,-vj,-1dq,-1hr,-1at,-44w,-11n,-244,-1k9,-4bk,-4tm,-14a,-2if,-26w,-qj,-410,-3qb,-x7,-1gs,-26r,-3jd,-19a,-nr,-jb,-tb,-4s8,-1gd,-17w,-587,-9v5,-74j,-3rz,-2mb,-36q,-1ch,-1cc,-1j0,-14u,-7eo,-qo,-140,-294,-3ed,-1ez,-18q,-4cj,-x7,-oq,-55p,-4wo,-14u,-1ya,-xm,-25x,-2cb,-1rm,-203,-o1,-7bc,-4z1,-9r4,-2wl,-1c2,-1ig,-1ko,-31b,-xc,-3tn,-6y5,-6ke,-11s,-14f,-258,-8rf,-5o1,-3ll,-42j,-9d8,-3qb,-48s,-z5,-2qr,-2b2,-7cb,-8cp,-18v,-za,-83j,-1t0,-186,-2xz,-5wn,-53m,-249,-8g1,-1gn,-1z4,-3dt,-sm,-22l,-7iz,-sr,-7un,-sc,-5ua,-2lr,-21h,-4xd,-4gz,-xc,-11s,-86l,-2xa,-xc,-1il,-44m,-4xi,-244,-2vr,-pu,-21w,-lo,-17h,-35r,-16i,-58h,-11n,-2as,-51y,-1b3,-6ju,-1e0,-5yl,-1jz,-a5z,-2to,-2cb,-1po,-1xb,-p5,-5ka,-zp,-5le,-1t0,-4ew,-109,-71c,-7sa,-1ls,-22l,-1jz,-k0,-16s,-6wm,-1ls,-1j0,-56t,-3nj,-69u,-1hr,-23z,-2gc,-3m5,-4vu,-1wr,-230,-3f2,-1x6,-5zf,-25x,-39i,-tg,-63q,-5x2,-3en,-5fa,-2nk,-xw,-3bb,-5o1,-34n,-2zs,-2xu,-5i7,-2y4,-1h2,-3i4,-12w,-1qi,-1t0,-109,-5bt,-2jj,-39d,-3f2,-14p,-18g,-3s4,-38j,-2hl,-2zi,-20i,-1ek,-zu,-1fe,-37k,-8en,-1rc,-4ho,-pz,-4ii,-1xv,-3b6,-73a,-30m,-131,-1cw,-hs,-2g7,-2s5,-2bm,-1p9,-3am,-69z,-i7,-366,-3i4,-11d,-39i,-36v,-rn,-2su,-3lq,-za,-lj,-195,-9qf,-19f,-1ez,-16s,-1r7,-2ki,-5q9,-1mw,-1jk,-7wq,-tg,-2g2,-71h,-2e9,-46z,-m3,-g9,-2as,-rd,-604,-17c,-8k7,-38e,-5ob,-118,-7rv,-208,-jv,-5e6,-1qn,-4av,-1j5,-5ir,-40l,-p0,-1ya,-z5,-1u9,-6xq,-16d,-1p4,-299,-2yt,-294,-1cc,-4ow,-gt,-1cr,-sw,-iw,-uz,-3n9,-qj,-l4,-rd,-1xb,-2jo,-tg,-1q3,-5el,-5s7,-25d,-1dg,-3xt,-1oa,-48x,-jb,-u5,-212,-2zx,-3z7,-hi,-1wc,-41a,-1e5,-1nq,-17m,-a0,-e6,-4mo,-1ig,-tg,-35c,-rs,-1ln,-2je,-13v,-4gu,-2ux,-11i,-3wu,-1x1,-11s,-1hr,-8xe,-j1,-1nl,-1ww,-r8,-1j5,-1ww,-16x,-2sp,-1u9f,-r8,-226,-e6,-5hi,-1ae,-2sk,-yg,-217,-59b,-1vd,-4k6,-rn,-1ig,-1ky,-m8,-2tt,-3bq,-163,-1wm,-2df,-3ra,-3gg,-nm,-1dv,-249,-13l,-1pj,-1sg,-44c,-1iv,-2jt,-yl,-5cx,-6uy,-40g,-19f,-2c1,-pf,-73k,-1g3,-1ls,-2kn,-127,-s7,-34d,-lj,-5ol,-1g8,-2p3,-gt,-up,-3jx,-f0,-285,-m3,-17h,-v9,-1rr,-2o4,-v9,-2vm,-109,-1nb,-tq,-4ry,-2xk,-r8,-3xy,-18q,-1bs,-m8,-2k3,-vy,-4n8,-118,-kp,-w8,-qo,-17m,-go,-rs,-gt,-v4,-1j5,-1g3,-2s5,-rs,-yg,-2l2,-1iv,-4d3,-fa,-lt,-14a,-2an,-zf,-3n4,-1mr,-32k,-2oy,-4rt,-1tf,-4s8,-4u6,-xc,-1kt,-ov,-91k,-w8,-1m2,-1o5,-xm,-u0,-1ib,-q9,-2a3,-5zu,-276,-4pb,-1rc,-pa,-1fj,-ge,-mi,-6ae,-3y3,-2lh,-596,-a9q,-1iq,-7t9,-3fw,-3hz,-4v0,-uf,-2q2,-4tc,-6tk,-12h,-3ac,-4oc,-3f7,-qy,-3sj,-kz,-1yf,-9va,-37p,-36b,-u5,-wn,-1jp,-vj,-3lv,-8aw,-4b5,-2nu,-406,-sw,-1rr,-pk,-33j,-406,-qy,-1l8,-nh,-1o0,-18g,-5bo,-65o,-pu,-3f7,-sh,-3x4,-1uo,-2zx,-pz,-3ys,-75i,-5wx,-el,-t6,-3xe,-q9,-2s0,-1vs,-12h,-3mz,-4gp,-3uh,-3f2,-3lb,-4we,-ov,-24j,-19u,-25i,-uu,-1ae,-g9,-kp,-541,-3xo,-28a,-1ue,-1kt,-2hl,-4ag,-49m,-9ag,-40q,-ws,-46a,-7c6,-2mq,-bww,-78z,-1p9,-10o,-ctj,-86l,-8m0,-5jq,-1d6,-9yw,-33t,-8td,-c8f,-67h,-2oy,-24y,-39s,-3hu,-4kl,-5tg,-645,-1ez,-2xa,-4ub,-1ef,-12m,-1ao,-63q,-898,-1py,-672,-16s,-a23,-36b,-3uc,-2as,-2ia,-10y,-951,-37p,-1mc,-4rj,-1ng,-1gn,-jg,-axm,-28u,-4vp,-1k9,-h8,-ol,-hx,-hx,-1j0,-up,-hi,-1bn,-1i6,-62c,-1sb,-18b,-11x,-1qx,-64k,-vj,-22g,-1tf,-5ku,-3lq,-t1,-up,-pa,-28z,-1gi,-1ya,-24t,-i2,-jg,-o1,-gt,-6q8,-18b,-80m,-1cr,-hs,-1i1,-1vs,-1dv,-1ae,-9g,-rd,-32u,-1mw,-1cm,-13l,-1ju,-2gh,-6f4,-le,-4ag,-1gx,-16i,-4oc,-186,-3z2,-299,-7x,-fk,-33y,-t1,-3l1,-1pj,-kf,-57s,-4nn,-5gy,-2hq,-jl,-q9,-ic,-rs,-4x3,-2p8,-4ni,-230,-dw,-3nt,-49m,-1t5,-2ty,-3rp,-pk,-6ch,-35h,-4qp,-8q6,-3um,-1d1,-2a8,-19p,-5im,-1gs,-1e5,-rd,-ku,-11n,-5ms,-3gq,-1ls,-39d,-40q,-384,-3io,-28f,-30w,-pk,-3g1,-712,-1h2,-2k3,-1nb,-s7,-7bw,-2df,-pa,-1jp,-ri,-uf,-ic,-320,-eq,-1gi,-118,-qt,-1n6,-fy1,-bof,-37k,-25d,-34s,-5kz,-5eg,-258,-3kc,-1ep,-5nc,-6y0,-3c5,-235,-v9,-8lq,-9ho,-5oq,-ua,-8rk,-6m7,-5qj,-5y6,-2x0,-4bu,-1aj,-3js,-9g5,-3am,-2xz,-13b,-3zr,-50k,-xw,-x2,-21m,-65j,-19z,-3ox,-m8,-6yu,-2h1,-23u,-2kn,-6ue,-yg,-2gw,-57i,-73f,-253,-5a0,-sc,-4v5,-3b1,-4jr,-389,-20d,-6gs,-s7,-o6,-4r4,-8de,-10e,-1gd,-271,-23z,-5kp,-3dt,-424,-7c1,-19f,-v9,-2pn,-10j,-n7,-39i,-1i6,-163,-3de,-3l6,-1q3,-2pd,-2us,-3on,-21h,-xc,-26w,-2m6,-xc,-lj,-2z3,-di9,-18q,-6ae,-q9,-41f,-2nu,-9sx,-1v8,-35r,-ol,-qy,-22v,-5pp,-vy,-6t5,-2z3,-1fj,-4b5,-1qd,-44c,-1nb,-fu,-gt,-2if,-2y4,-6hc,-9kv,-21m,-154,-3lv,-32k,-35c,-zk,-2w6,-3bq,-6at,-1ft,-1ok,-3rf,-62r,-31b,-2lh,-2v2,-2x5,-5k0,-tv,-1jp,-29e,-2xk,-140,-go,-sc,-2zd,-1ky,-lo,-56e,-15o,-5a5,-5qo,-1a4,-7e4,-13b,-1gd,-42j,-2fs,-24y,-307,-2px,-88j,-14a,-18g,-2tt,-56y,-78a,-5z0,-2fi,-35m,-8rk,-4qz,-1hc,-9ce,-32u,-2nk,-33o,-6k9,-33t,-712,-2lw,-3km,-2b2,-1hm,-25x,-172,-rs,-7c1,-2lr,-8ny,-5up,-18b,-4n8,-7s5,-1c2,-1gd,-2q7,-181,-140,-9t7,-bm2,-5i2,-5ge,-27q,-6tk,-19a,-2oe,-1cw,-3bq,-18g,-1mr,-74y,-1ou,-1jk,-1dq,-sr,-jq,-13l,-1ao,-5kp,-8lv,-2ud,-9di,-6nb,-5o1,-2o4,-7e9,-3lv,-5jq,-258,-4pl,-pu,-1yf,-1xl,-b6s,-2t9,-2gm,-vt,-7r1,-1l3,-2u3,-8lq,-3es,-12w,-4n3,-591,-7rg,-wd,-b8l,-6pe,-3vb,-7ui,-2d5,-2gc,-2yy,-2yj,-gy,-1hm,-4dd,-3rp,-9vf,-25s,-sw,-35r,-5pa,-14f,-11s,-1bx,-7rl,-jq,-3ac,-5bt,-7br,-3ac,-5m8,-29e,-7du,-3lg,-1oz,-5aa,-370,-9gz,-5d7,-6ea,-wi,-4or,-ahs,-22v,-1o5,-ff,-3hf,-81l,-2bc,-4p1,-50z,-1ae,-3fh,-w3,-ael,-18g,-md,-q9,-16d,-2to,-11i,-6jp,-2p3,-5ap,-1pe,-2v7,-x2,-258,-1mh,-vy,-18q,-alj,-3st,-2jj,-5c8,-104,-5s2,-320,-ggx,-14z,-6op,-33y,-1sv,-31b,-1db,-5bj,-26c,-zu,-bh7,-465,-8gg,-29o,-8io,-29j,-3jd,-20d,-5az,-1vd,-9gu,-4yw,-lj,-bqi,-5qo,-1k9,-8t8,-4co,-3fm,-1ta,-3v1,-16s,-3bq,-w3,-3u2,-6ze,-2rl,-2i5,-2nz,-14u,-nm,-181,-31g,-127,-1ng,-49c,-28f,-zu,-vj,-267,-b2m,-t6,-ge,-2f3,-74t,-3fr,-ir,-5yq,-2zn,-1ut,-1gn,-3zw,-4vp,-yl,-1ln,-1l3,-u5,-h8,-1hr,-195,-fk,-5nm,-2pn,-7n0,-5uk,-2pn,-88o,-nw,-7sk,-pp,-32p,-1yz,-4sn,-20s,-hs,-49c,-44c,-sc,-1ng,-1j0,-wi,-1ke,-5d2,-1qi,-ajg,-76c,-t6,-14k,-5h3,-58c,-22g,-7bh,-15j,-1e5,-15t,-cej,-14u,-24e,-vy,-2xp,-6d1,-1ut,-1s1,-2xf,-19k,-8mz,-86v,-tb,-bek,-4xi,-500,-2m1,-1gd,-ov,-pk,-3g1,-cfx,-eg0,-4om,-5d7,-36l,-3bv,-8am,-2zn,-3ts,-1tu,-lo,-780,-2k3,-6o5,-6of,-5hi,-3ji,-244,-14z,-72v,-2t4,-3mf,-474,-14f,-1qs,-tg,-276,-bxb,-3io,-61d,-5jv,-2vc,-25n,-203,-25x,-at6,-31b,-zk,-4pq,-27g,-wx,-pu,-27l,-492,-8oi,-3v6,-58r,-3wz,-2da,-6u4,-up,-4l0,-1a4,-12r,-ol,-2jt,-9ow,-9cj,-654,-24y,-1zo,-oq,-4yc,-uf,-15o,-3v1,-1mc,-1gs,-k0,-3lq,-31b,-6ft,-546,-2nk,-a4b,-1db,-3w5,-6c7,-cgr,-49r,-35w,-3kr,-3it,-1iq,-go,-18g,-1k4,-2r1,-4p1,-389,-203,-4ym,-2f3,-13v,-401,-442,-ih,-3ys,-951,-11i,-3dj,-361,-kf,-3jx,-vy,-16d,-2jj,-76c,-127,-339,-tq,-40q,-582,-38y,-1kt,-26c,-1j0,-163,-424,-29o,-nr,-1xg,-4wy,-7vm,-2hb,-14u,-375,-7an,-cs,-4cy,-m8,-190,-2wq,-2y4,-29j,-2n0,-1a4,-1j5,-2ad,-v9,-m3,-186,-38o,-2jo,-4bf,-7ye,-2jt,-yv,-1x6,-2lw,-dh,-2gw,-2lc,-13l,-9ew,-1q8,-1mm,-35w,-1ww,-25d,-1ft,-50k,-4c9,-q9,-wn,-pf,-og,-2l2,-17c,-4w9,-x5r,-15t,-vj,-16d,-1po,-1il,-1zo,-za,-4y7,-4n8,-zz,-am3,-4ns,-11d,-6kt,-lt,-1aj,-5jq,-y6,-1w7,-7c6,-1j0,-19f,-53c,-1c7,-2fx,-xc,-qe,-1il,-md,-13b,-3de,-145,-9yr,-hx,-6e0,-5hd,-3iy,-3d9,-qo,-3v6,-tb,-n2,-24o,-4i8,-1x6,-23k,-2yo,-1iq,-1ig,-2e9,-nc,-4ym,-5zp,-8e8,-2nf,-15o,-oq,-dsy,-3ql,-2k8,-2dp,-23p,-465,-46u,-1q3,-3x9,-1j0,-wx,-4i8,-1ch,-5cs,-3ma,-1o5,-x7,-md,-xc,-3n4,-1jf,-2w1,-3td,-136,-2hv,-24e,-2d0,-21m,-pu,-1xv,-yl,-tb,-2na,-uz,-2wq,-1fo,-1l3,-1mc,-2oe,-2vw,-1o5,-3i9,-3u7,-3bq,-sc,-ic,-4y7,-37p,-g9,-1gx,-qy,-26r,-2lr,-2d5,-6qs,-4c9,-3wa,-1i6,-1ok,-3dy,-11n,-2tt,-10y,-18q,-pf,-5i2,-uu,-26r,-1py,-4ba,-325,-vj,-2v7,-sr,-18v,-1gi,-a2n,-7oy,-4ew,-3cf,-xc,-20s,-18l,-2nk,-jb,-2kn,-fz,-4my,-1dq,-vy,-2wq,-1bx,-1qn,-3ah,-r3,-1xg,-y1,-qt,-2xf,-1ay,-sm,-5kf,-5ih,-1dg,-2c1,-2o4,-1sb,-9m4,-k0,-26w,-2y9,-35m,-1n1,-2pi,-3p7,-rd,-5yl,-3m0,-16x,-47y,-15t,-5eg,-4n3,-3ru,-23u,-16s,-60t,-up,-2fn,-15o,-3ed,-1y5,-38t,-9ix,-1ko,-45b,-13l,-zz,-52n,-ms,-2dk,-y6,-2lc,-4pb,-4zb,-401,-3y3,-2lh,-za,-1nq,-2vh,-50k,-18v,-195,-37z,-1ok,-1cw,-jb,-4vu,-w8,-4d3,-4ii,-1nb,-6a4,-10t,-271,-4yh,-j1,-5n2,-29e,-14p,-28k,-97e,-3nj,-4av,-1op,-2pi,-1sg,-4nn,-1ya,-479,-5jv,-wn,-1hr,-vj,-4fl,-v9,-3ru,-2xp,-pz,-1d1,-38o,-57x,-o6,-up,-1ut,-5tv,-177,-2vh,-wx,-2iz,-375,-249,-4kv,-15t,-16s,-16i,-10t,-2h1,-3sj,-tv,-834,-5fk,-33o,-rn,-1s6,-8j3,-11s,-o83,-4ew,-jl,-118,-3gb,-44r,-1nq,-1ch,-38t,-yl,-2wb,-11x,-4vz,-2zn,-2pd,-2ks,-31q,-2zx,-6hr,-253,-z0,-9ec,-2o4,-7s0,-6jk,-6vn,-32p,-4nx,-479,-17r,-3qg,-anm,-1w2,-65j,-h4j,-2c6,-7ia,-4dn,-46z,-3ex,-2np,-1ep,-5u5,-zf,-3ox,-38t,-7a8,-4tc,-1bd,-2ey,-v4,-2p3,-2kn,-z5,-7fd,-15j,-9pv,-3s4,-5r8,-12r,-15e,-1gn,-5t1,-1py,-pz,-3k7,-da2,-3fm,-1ao,-6hh,-5pf,-1bi,-7je,-357,-3x9,-1ln,-4qz,-4w4,-28z,-a6o,-43d,-19u,-1h2,-2to,-5dr,-3hz,-2mq,-4hj,-3gb,-2oj,-26h,-2hg,-1a9,-65t,-26w,-401,-w3,-6bx,-2gh,-1kt,-370,-1ek,-ka,-ua,-3k7,-yv,-799,-69f,-3pm,-1bs,-4ba,-8xj,-14u,-s7,-39d,-7hv,-3j3,-4is,-ri,-44h,-131,-2nu,-4t2,-yq,-pp,-3pc,-168,-8lg,-q4,-2to,-1gs,-2f8,-7v7,-429,-5dh,-73z,-1ta,-2wg,-3j3,-5g4,-1ya,-1tf,-1h7,-tg,-6d1,-1v3,-1o5,-4xs,-5p0,-384,-1g3,-37k,-596,-4he,-6uj,-2ip,-r3,-541,-19u,-2an,-5ge,-1a4,-rd,-16x,-4ym,-1g8,-307,-40q,-2ey,-2s5,-1xq,-7fn,-25s,-109,-2v2,-348,-15j,-1t5,-6eu,-7s5,-82u,-u0,-11i,-98i,-6j5,-u5,-rn,-1t5,-lch,-1u4,-e8s,-4or,-1v8,-66n,-eer,-14a,-40g,-47j,-bjp,-1oa,-ay1,-7et,-bln,-7wb,-4l5,-1a4,-45v,-1n1,-3fh,-7kd,-3io,-1yp,-hsa,-1s1,-lpy,-2z3,-7cq,-3mk,-2z3,-18q,-343,-1ef,-ayb,-3d4,-4kg,-3xt,-5r8,-16n,-2wq,-14z,-app,-6vx,-28k,-5w3,-37p,-2yo,-2sf,-2p3,-zu,-7a3,-11i,-gm2,-dn4,-38t,-447,-3cu,-6ww,-316,-5j1,-16n,-13l,-f2i,-16n,-3ar,-pz,-7y4,-4fl,-uk,-7m6,-1o5,-5be,-85r,-1j0,-4ab,-3hp,-8fh,-118,-4o7,-483,-5ve,-4is,-1ib,-3y3,-1uy,-2d0,-5af,-307,-brc,-66s,-7ki,-3od,-7p3,-1zo,-1ef,-2g2,-l4,-1nv,-23u,-80w,-yv,-1fy,-6vd,-59v,-2kd,-73p,-86g,-4a1,-l9,-348,-d5h,-46f,-2ee,-21h,-8ck,-5q4,-50u,-29y,-4bp,-3u2,-69f,-1dv,-1q3,-3ah,-a3c,-2h1,-92j,-45b,-1vs,-4fb,-154,-2zs,-4ct,-49w,-7w1,-yv,-3k7,-4zl,-38y,-4ag,-13q,-t6,-uz,-bd6,-1cm,-762,-749,-1y0,-zu,-22q,-11d,-yq,-3lv,-25d,-1qs,-8rz,-1jp,-8rz,-bd6,-i93,-212,-4a6,-3a7,-eco,-8o3,-4xd,-1vi,-6oa,-77b,-czx,-17w,-11i,-7sz,-3xj,-4q5,-32p,-7hg,-1z4,-140,-3vv,-54b,-f6e,-1gs,-29t,-b81,-6y0,-1ky,-113,-2oo,-7dk,-2ai,-1s6,-10t,-2q2,-7bm,-1sl,-4w4,-12m,-4bp,-6u9,-2sz,-14a,-1jf,-3gv,-26h,-37a,-zk,-5q9,-2u8,-zf,-95g,-7n0,-bg8,-668,-adh,-1ig,-eme,-3m5,-1vd,-78k,-9j2,-18l,-2g2,-xh,-1s1,-etw,-n8y,-4b5,-4id,-1zy,-bgd,-1y0,-7l2,-2gm,-62r,-8ql,-1ut,-1dl,-a1j,-2q2,-1mm,-2rg,-2nz,-1900,-9xx,-3s4,-1uy,-839,-z5,-6gd,-8n4,-4dd,-19k,-127,-h7v,-208,-8x9,-3xy,-6ng,-42y,-bbi,-8dy,-14u,-3u2,-3p7,-76r,-1qn,-cb2,-4lp,-1q3,-3n9,-2rv,-49m,-8xo,-514,-1hw,-4la,-1bx,-5cx,-190,-1ay,-4i3,-2jt,-vy,-2du,-bvs,-2f3,-3ij,-3y8,-2zd,-1w2,-2x0,-8bq,-1il,-2ip,-3td,-xm,-609,-2x0,-4va,-l9,-7ax,-4ho,-5af,-1gx,-3ti,-yl,-le,-6s6,-38t,-1a9,-1bs,-6pj,-2q2,-1gd,-3o8,-7dz,-6fj,-3d4,-3dj,-44w,-4zb,-32a,-2dz,-l9,-kz,-1gs,-6nl,-7lw,-xc,-2ey,-1ze,-1y0,-195,-27b,-77g,-f55,-ah8,-442,-1vs,-357,-oq,-4e2,-2ot,-1pt,-og,-6il,-6gs,-q4,-18g,-1e0,-302,-7gc,-226,-7g2,-bmr,-d11,-1vs,-ci5,-c44,-9lk,-6c7,-3011,-2hq,-3yx,-4rj,-x8y,-17rp,-221,-mdf,-1aja,-pyv,-alj,-2v2,-ihz,-4a1,-25s,-x9x,-7bh,-fzz,-6a9,-3y8,-d6q,-dj8,-2e9,-5k5,-ill,-b3b,-10e,-2gr,-9bu,-cf8,-9wo,-21r,-159,-bww,-1sb,-10y,-1hh,-brw,-2i5,-1rw,-6p9,-19u,-1u4,-er4,-3vb,-5ge,-2i0,-nz2,-buo,-fp0,-974,-byp,-208,-6jp,-7to,-3n4,-1y0,-64a,-1b3,-x2f,-6qn,-eba,-3nj,-j10,-d93,-2lc,-d25,-1sv,-7a8,-5jb,-6uo,-2oj,-a2d,-53r,-3g6,-5af,-8hf,-294,-67h,-48x,-3ll,-3fh,-34d,-b63,-bqd,-5c8,-3s4,-5v9,-8ny,-80h,-3e3,-bib,-43i,-1bs,-3m0,-pz,-efv,-2wg,-5md,-5k0,-2hb,-1sv,-52n,-2cq,-55z,-7x0,-a78,-13q,-1q8,-q4,-4b0,-3ru,-6rr,-1ft,-4ho,-4r9,-7z3,-82k,-1j0,-2bw,-7z3,-22q,-75x,-9eh,-3fr,-4cy,-64z,-6rw,-1cw,-4jh,-2h1,-5bo,-8ah,-16n,-f2s,-9uq,-370,-4v0,-5e6,-3xt,-7ki,-8g6,-3cp,-8es,-4x3,-3io,-bhm,-1gx,-7as,-429,-4lf,-chq,-5ms,-1o0,-4bp,-cu8,-3gb,-4yr,-893,-8mf,-6yk,-bqi,-75i,-a5u,-78a,-c0x,-dql,-537,-8nt,-2dk,-5y6,-96a,-203,-9xs,-7rv,-5yb,-1wr,-f64,-47t,-ba9,-a1o,-208,-85m,-8s4,-6bi,-64u,-63g,-8kc,-6m2,-9bk,-5vt,-56j,-7v7,-f73,-l3g,-d16,-9fv,-4r9,-5ly,-910,-3hu,-23f,-dtn,-bof,-87f,-13l,-9ow,-7ud,-a2s,-9yr,-9kq,-5up,-4ii,-d52,-9t7,-5n2,-13b,-1ke,-2y4,-81q,-2x5,-1bsp,-dse,-gng,-dyi,-4la,-5rn,-3h0,-9z6,-8bq,-6cm,-5i2,-5hx,-2xz,-35m,-6g3,-34x,-4bf,-10ue,-2gw,-4qk,-9ho,-c7q,-j9w,-7rb,-5v4,-2su,-dcf,-5pf,-5yv,-e65,-1j0,-1y5,-645,-ue6,-aov,-8bb,-140,-4o2,-76h,-hjy,-1kt,-dhu,-dra,-8gg,-d20,-42e,-3so,-4si,-hqm,-hm1,-4jh,-cyt,-6vi,-jnn,-591,-4wy,-cz8,-d34,-67h,-29o,-gta,-2p8,-8l1,-8qq,-4g5,-3uh,-64f,-3m0,-6mm,-f9g,-4yw,-1n6,-1mr,-em9,-415,-3h5,-87u,-51j,-35m,-g40,-3lb,-8z7,-64f,-3p2,-5ob,-4my,-5a5,-6vx,-3tn,-fuf,-22l,-1xb,-5rd,-hxp,-il1,-1ld,-104,-6rr,-6sl,-1qn,-1vs,-zf,-zz,-6nl,-5ku,-1bx,-7pn,-3h0,-4eh,-3ox,-587,-6xb,-5c8,-35c,-3gq,-44r,-7j9,-6rh,-249,-3i9,-f4b,-34x,-1ek,-3wa,-gp4,-6dl,-6i6,-15e,-640,-609,-98i,-5za,-bsg,-6cm,-974,-2jo,-5qt,-7rv,-9z6,-1bn,-2l2,-ars,-cto,-goz,-1mw,-dgl,-8lg,-2hl,-5sm,-7nu,-54v,-6nb,-zz,-a87,-96p,-3ny,-2pi,-i7a,-1qx,-dm0,-2lw,-410,-db6,-7yj,-2j4,-63v,-8ha,-dzw,-2j9,-21r,-48d,-88t,-9ss,-8kc,-6xl,-2g7,-361,-4f1,-a1e,-67r,-c3u,-d1q,-3bl,-4gk,-4in,-hxz,-36v,-5hx,-190,-hxp,-4q0,-7vw,-5tg,-f6t,-2xz,-348,-1hw,-5vy,-ai2,-m5x,-4pl,-e8n,-357,-kyb,-3zw,-7x5,-jgz,-186,-1l3,-ekv,-ceo,-al9,-86l,-y6,-7na,-294,-4w9,-1g3,-fqo,-6dg,-ahn,-4eh,-79j,-jix,-5ka,-2un,-4g0,-8wz,-ipc,-gc2,-dm0,-6yz,-8cf,-9kv,-71r,-6g3,-794,-ai2,-64f,-23f,-44m,-8dj,-a4q,-bo5,-y1f,-is4,-1x1,-5ua,-pn2,-848,-3s9,-45b,-79o,-h7q,-9mo,-dse,-5jb,-2k3,-13lk,-4z6,-5az,-4em,-ahn,-j60,-2qc,-3g6,-dwa,-xrk,-9tm,-492,-8lv,-bpe,-qe0,-rf3,-bcc,-cb7,-kfk,-8c0,-aly,-8l6,-1mw,-nuw,-3jx,-a5k,-5wd,-gtu,-6ww,-8kh,-2a3,-j47,-k7s,-2rl,-258,-181,-e6k,-1uo,-6sb,-1ep,-85w,-ac3,-c5s,-dny,-1r7,-519,-air,-663,-dfc,-3sy,-bpt,-451,-2dk,-5ff,-cbr,-3ar,-dgq,-5kp,-36q,-7x5,-rnu,-28u,-2n0,-k8m,-28f,-3lb,-1gd,-kk5,-a2i,-bz9,-4u1,-6h2,-e9r,-19k,-9n8,-5cd,-4uq,-i2p,-294,-6z4,-5lt,-10t,-1yu,-8hu,-c9t,-gw7,-23z,-elf,-65o,-19z,-at1,-8l6,-3ys,-ilg,-de3,-1yk,-ekq,-6pj,-4u6,-7r6,-23f,-19u,-67h,-9em,-aim,-bue,-2b2,-9d3,-8dj,-55f,-1l3,-fo1,-e5b,-at6,-eal,-a00,-ciu,-h17,-3rf,-crb,-73f,-235,-7qm,-4q0,-8k2,-825,-3oi,-1sv,-hxa,-85m,-2p8,-31v,-bbi,-rlw,-5qj,-4v0,-9oh,-58r,-at6,-88o,-3nj,-3n4,-47o,-hy4,-186,-2lc,-euv,-5jl,-483,-7if,-2r6,-2xk,-50p,-2y4,-29y,-qqx,-2gc,-c44,-18v,-7je,-dlq,-2kd,-cmb,-4fg,-18b,-ggd,-42y,-31g,-b13,-4ab,-1sv,-1hr,-6d1,-4va,-8ny,-6kt,-2n0,-77q,-7ps,-anh,-31q,-4jc,-6yz,-1db,-9d8,-51y,-2dz,-7jt,-21w,-87u,-1n1,-end,-57x,-f7n,-532,-axw,-2na,-4e2,-8gq,-505,-2h6,-5l4,-6oa,-bop,-938,-244,-23k,-12h,-dkm,-e3d,-2sz,-4j7,-23u,-ijn,-cpx,-46f,-fak,-1xg,-8k7,-6dv,-1q3,-7oj,-4xi,-cqh,-4hj,-5i7,-7g7,-e2j,-36g,-cu3,-a96,-3ei,-vt,-492,-325,-3j8,-8js,-is4,-9m4,-kaa,-cot,-ktl,-541,-5bj,-9ub,-8rp,-4a6,-3y3,-a0k,-ci5,-2ps,-4lk,-20s,-21c,-1x1,-4b5,-3e8,-78a,-3rf,-85h,-186,-cux,-31q,-bqn,-18g,-6tz,-35h,-4c4,-2kd,-ag9,-ay6,-ccl,-726,-3ed,-2fs,-24y,-56j,-2xf,-at6,-byu,-6ky,-bwr,-7fi,-20i,-56j,-7cb,-7l7,-a8w,-3ur,-302,-33e,-5eq,-a3m,-41k,-7wg,-91f,-dv6,-3ji,-3nt,-ela,-11n,-cnu,-2su,-7yj,-21w,-9a1,-8k7,-1pj,-54g,-1xq,-b18,-agj,-1u4,-1qd,-95v,-cto,-1cc,-4i3,-3wf,-1sg,-4aq,-up,-578,-6z4,-1gn,-m8,-37z,-6ib,-532,-1gx,-8wu,-2su,-c1h,-4s8,-wn,-1f4,-3fm,-7yj,-8jn,-cot,-6sv,-6v8,-4jm,-9la,-26c,-280,-2jj,-1qn,-25n,-a3w,-bgi,-4k1,-85m,-h17,-3h0,-131,-4zl,-4r4,-4cj,-6ef,-c1w,-28f,-7y4,-6ko,-67r,-5le,-2wv,-cqh,-3oi,-177,-dmp,-bek,-30c,-4d3,-7ia,-163,-5z0,-1d6,-2sa,-4cj,-2l7,-za,-2br,-duw,-7ej,-3sj,-983,-dno,-762,-a3w,-627,-9pq,-4lp,-4u1,-1cw,-1qn,-2i0,-1aj,-5ms,-23p,-cj9,-2fd,-6qd,-3se,-7wq,-4id,-4y2,-2gh,-9lk,-474,-1nb,-8xj,-32u,-2rl,-uz,-8o3,-1uj,-1ue,-3pc,-1hw,-9b0,-fi2,-1sb,-16x,-5by,-1iq,-7vh,-5zk,-38o,-1b3,-7ee,-16i,-280,-7e4,-anw,-4yr,-1ta,-29j,-8c0,-16d,-1zt,-6x6,-atq,-91u,-6hw,-dtd,-b3v,-6ln,-3vv,-88e,-5nw,-311,-c3p,-8cp,-h2v,-442,-8wf,-4ug,-lgx,-90v,-8mu,-c9j,-7rq,-47e,-4pl,-8hz,-1b8,-799,-6ao,-1ju,-230,-d4d,-44h,-duc,-aby,-4tm,-1nq,-dmu,-3no,-3kc,-ofv,-857,-nrk,-1ke,-ld1,-2zi,-3q1,-3gb,-esx,-5ff,-429,-brw,-36q,-ffa,-nwp,-8y3,-5jb,-7t4,-bnq,-4em,-qek,-21w,-3ma,-8p2,-2q2,-9fb,-mgc,-3ne,-6q3,-j9m,-4wj,-1yk,-65e,-73p,-hoj,-72l,-aqj,-1vn,-9y2,-5g9,-ggx,-4er,-5go,-clm,-2n5,-50z,-6sv,-g9p,-6n6,-8y3,-2cq,-66i,-17h,-zz,-5a5,-2mv,-shz,-ao1,-1fj,-1f4,-kge,-2nk,-fjq,-2t9,-677,-9v0,-2kd,-5fp,-91u,-1xq,-83e,-lu4,-ajg,-3rk,-qya,-9al,-9lu,-8uh,-u3w,-3se,-4q5,-2ad,-1hh,-5j1,-528,-fk0,-1aj5,-1rx4,-dso,-12ny,-2h1,-4ho,-230,-3h0,-a4v,-4ho,-7ye,-9lk,-7xu,-eht,-cad,-faz,-ig6,-1ww,-bil,-57d,-64k,-1mr,-byk,-668,-7te,-e3d,-9fg,-d70,-4xn,-1yf,-mvc,-1r7,-bc7,-v8l,-875,-f2i,-wpn,-4qu,-4ix,-7ax,-47e,-2dp,-chq,-2hb,-8os,-2vm,-4ce,-aeq,-1qi,-3ed,-pz5,-3u2,-72l,-8xe,-235,-3z2,-ahi,-3ei,-6rm,-bu9,-2te,-3c0,-3ed,-8v6,-1c7,-3x9,-e51,-b4u,-2ki,-yix,-4xx,-3o3,-546,-73k,-32f,-s43,-72q,-44r,-a8w,-gsl,-24j,-1aj,-4ga,-1j0,-3os,-7to,-js3,-2n5,-1gx,-3es,-8it,-3so,-4ul,-1m7,-m3k,-7ty,-212,-4fg,-4ho,-88y,-frd,-p5k,-2l7,-2iz,-1v3,-dts,-slb,-lls,-1ke,-6aj,-ajq,-3f2,-3td,-3qv,-7z8,-456,-6oz,-16ax,-6o5,-5by,-9z1,-35c,-fqj,-kms,-do3,-7sz,-vut,-4f6,-307,-7o4,-4gz,-1ln,-19by,-54q,-2if,-3s4,-6a4,-3vb,-875,-3a2,-7gc,-zk,-3io,-e83,-dwa,-xq6,-27v,-4y7,-5eq,-evk,-1t5,-6q3,-2zi,-38e,-55f,-32f,-7xp,-dfm,-3os,-dfh,-8um,-398,-39d,-7oo,-eec,-8ie,-hto,-cn5,-aq9,-oe2,-181,-3mu,-90b,-51e,-6kj,-j1u,-30w,-bww,-i25,-b3g,-93x,-7qw,-5u0,-2nz,-2lh,-2tt,-1j5,-8uc,-93x,-ksm,-n25,-6rr,-2et,-e4w,-avj,-1j5,-c08,-i52,-7ot,-gpy,-gsg,-hcl,-56t,-2pn,-dvb,-5c3,-29e,-df2,-81q,-3mk,-w8z,-kg4,-3ji,-a9v,-9dn,-cnz,-16oe,-h4e,-7cl,-g4k,-2cv,-ery,-l6d,-3hk,-ag9,-8ck,-4o2,-3os,-f00,-9jc,-5kp,-1649,-2dp,-a4v,-17st,-55f,-280,-13g,-9vu,-bd6,-ig6,-7rl,-9f6,-16s,-c26,-2ki,-ep1,-343,-6xb,-ams,-pl4,-20d,-3rk,-4my,-4t2,-iy8,-iqq,-32a,-4r4,-4m9,-pd7,-bch,-3g1,-98i,-mb2,-8td,-3dj,-334,-5rd,-1m7,-9zb,-465,-7l7,-3zr,-154,-1lx,-677,-8a7,-70s,-t1,-3u7,-g2w,-1yf,-adc,-3ck,-2d5,-2na,-h62,-6eu,-aaf,-2c6,-d0r,-4kl,-2p8,-jg0,-1zo,-ic0,-1of,-6hm,-2nk,-1uy,-88e,-9bp,-285,-uf,-5nw,-1qd,-1hm,-1pj,-eub,-4f1,-e15,-20i,-97o,-1o0,-47o,-4h9,-51j,-5uz,-1kt,-d0h,-48i,-78p,-357,-3yi,-6jp,-29t,-yv,-1y5,-27q,-1t0,-hrv,-bbi,-f4g,-2gw,-2wl,-c5i,-9wy,-5sh,-6jz,-co4,-g31,-fj1,-47t,-3aw,-28f,-5xr,-aq9,-9qf,-780,-2ik,-ua,-93d,-1hh,-1ef,-dex,-5gt,-iyi,-7ax,-5gj,-d25,-89i,-2l7,-f5p,-9y7,-18b,-3nj,-23u,-ryj,-5ol,-2cv,-3z7,-2nf,-7bw,-7bc,-fim,-59q,-8m5,-1t5,-fua,-8de,-9gf,-1zj,-3pw,-6vx,-6mr,-9m4,-4he,-1h2,-2lm,-1ok,-4p1,-ce4,-2k3,-g7r,-33t,-45v,-5md,-1f4,-4ni,-og5,-9yc,-4r9,-2gr,-717,-4pv,-ica,-9d8,-1sv,-iql,-byu,-jzq,-898,-jkq,-vk4,-6nl,-gd1,-4vu,-fkk,-6o0,-4zq,-465,-488,-22g,-nx9,-byu,-dfw,-528,-ery,-7zx,-7hl,-46u,-7dk,-2vr,-k8c,-die,-i8y,-2oe,-phd,-e0l,-2if,-6e5,-30m,-yzv,-i3j,-can,-5jg,-3ma,-370,-m8k,-irp,-15t,-3o3,-4ow,-14xr,-wte,-v77,-d11,-74e,-ezl,-m5d,-6li,-78z,-jva,-9jc,-h3u,-1y0,-2y9,-6i6,-c2q,-2zd,-92y,-fhi,-8u7,-bmr,-pp5,-3ah,-3ti,-1aj,-2ej,-bkt,-kap,-2k8,-pol,-2dk,-k6y,-4he,-3q6,-8ed,-26h,-3ru,-4v0,-1wh,-jmo,-jlu,-d25,-6hh,-42t,-amd,-2cb,-6wr,-nuc,-2sa,-7sf,-8y8,-a41,-8kw,-2an,-30r,-hxk,-1b8,-1oa,-2tj,-8jn,-90q,-1fe,-b1x,-3u7,-5xh,-2v2,-6of,-g9k,-26r,-58r,-1r7,-i5h,-7x5,-40l,-2ot,-4tc,-cfn,-820,-2df,-8r5,-a19,-6h2,-jzv,-efb,-9ry,-2gh,-3p2,-5ly,-39x,-d48,-6il,-5c8,-4om,0,-429,-3ne,-3hk,-5rn,-gwm,0,0,-7mg,-6p4,-7yt"};</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+"use strict";
+/* ================================================================= decode */
+function decodeSeries(raw){
+  const D=raw.d.split(","),Cc=raw.c.split(","),Oo=raw.o.split(","),
+        Hh=raw.h.split(","),Ll=raw.l.split(",");
+  const base=Date.UTC(+raw.base.slice(0,4),+raw.base.slice(5,7)-1,+raw.base.slice(8,10));
+  const out=[];let day=0,c=0;
+  for(let i=0;i<raw.n;i++){
+    day+=parseInt(D[i],36); c+=parseInt(Cc[i],36);
+    const u=new Date(base+day*86400000);
+    const y=u.getUTCFullYear(),mo=u.getUTCMonth(),da=u.getUTCDate();
+    out.push({
+      y:y, iso:y+"-"+String(mo+1).padStart(2,"0")+"-"+String(da).padStart(2,"0"),
+      t:new Date(y,mo,da).getTime(),
+      o:(c+parseInt(Oo[i],36))/100, h:(c+parseInt(Hh[i],36))/100,
+      l:(c+parseInt(Ll[i],36))/100, c:c/100
+    });
+  }
+  return out;
+}
+
+/* The downloadable copy has the dataset baked into the page and is fully self-contained.
+   The hosted copy ships without it and asks the API for the identical encoded series. */
+const ROWS=[];
+let BASELINE_LAST="";
+function hydrate(raw){
+  ROWS.length=0;
+  decodeSeries(raw).forEach(r=>ROWS.push(r));
+  /* daily change vs previous session, carried across year boundaries */
+  for(let i=0;i<ROWS.length;i++) ROWS[i].chg = i? (ROWS[i].c-ROWS[i-1].c)/ROWS[i-1].c*100 : null;
+  BASELINE_LAST=ROWS[ROWS.length-1].iso;
+  rebuildYears();
+}
+
+/* ================================================================= events */
+/* Curated only where the driver is well documented. Anything unverified is
+   deliberately absent — the move still shows up, just without a caption. */
+const EVENTS=[
+  {d:"2008-01-21",t:"Global credit-crisis sell-off"},
+  {d:"2008-09-15",t:"Lehman Brothers collapses"},
+  {d:"2008-10-24",t:"Peak of the global panic"},
+  {d:"2009-05-18",t:"UPA election win — trading halted on the upper circuit"},
+  {d:"2009-03-09",t:"Global markets bottom"},
+  {d:"2011-08-08",t:"US sovereign credit-rating downgrade"},
+  {d:"2013-08-16",t:"Rupee crisis / Fed taper tantrum"},
+  {d:"2014-05-16",t:"NDA wins the general election"},
+  {d:"2015-08-24",t:"China devaluation — global 'Black Monday'"},
+  {d:"2016-06-24",t:"Brexit referendum result"},
+  {d:"2016-11-09",t:"US election result; demonetisation announced the night before"},
+  {d:"2018-02-01",t:"Long-term capital gains tax reintroduced in the Budget"},
+  {d:"2018-09-21",t:"IL&FS default triggers the NBFC crisis"},
+  {d:"2019-05-23",t:"NDA returns with a larger majority"},
+  {d:"2019-09-20",t:"Surprise corporate tax cut"},
+  {d:"2020-02-01",t:"Union Budget (Saturday session)"},
+  {d:"2020-03-12",t:"WHO declares COVID-19 a pandemic"},
+  {d:"2020-03-23",t:"COVID crash bottom — steepest single-day fall on record"},
+  {d:"2020-03-25",t:"Nationwide lockdown begins"},
+  {d:"2020-04-07",t:"First big recovery rally"},
+  {d:"2021-02-01",t:"Union Budget rally"},
+  {d:"2021-10-19",t:"Record high of the 2021 bull run"},
+  {d:"2022-02-24",t:"Russia invades Ukraine"},
+  {d:"2022-06-17",t:"Global rate-hike sell-off low"},
+  {d:"2023-01-27",t:"Hindenburg report on the Adani group"},
+  {d:"2024-06-03",t:"Exit polls point to a landslide"},
+  {d:"2024-06-04",t:"Election results undershoot expectations"},
+  {d:"2024-09-26",t:"Record closing high"},
+  {d:"2025-02-01",t:"Union Budget (Saturday session)"},
+  {d:"2025-04-07",t:"Global rout after the US reciprocal-tariff announcement"},
+  {d:"2025-05-12",t:"India–Pakistan ceasefire announced"},
+  {d:"2026-02-01",t:"Union Budget (Sunday session)"},
+  {d:"2026-03-19",t:"Global sell-off, crude spike, hawkish Fed; HDFC Bank chairman resigns"},
+  {d:"2026-03-30",t:"West Asia conflict — Brent surges, rupee hits a record 95/USD"}
+];
+const EVENT_BY_DATE={}; EVENTS.forEach(e=>EVENT_BY_DATE[e.d]=e.t);
+
+/* ================================================================= format */
+const NF=new Intl.NumberFormat("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const NF0=new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+const num=v=>NF.format(v);
+const rupee=v=>"₹"+NF0.format(Math.round(v));
+const pct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function fmtDate(iso){const p=iso.split("-");return p[2]+" "+MON[+p[1]-1]+" "+p[0];}
+function fmtDateLong(iso){
+  const p=iso.split("-"),dt=new Date(+p[0],+p[1]-1,+p[2]);
+  return DOW[dt.getDay()]+", "+p[2]+" "+MON[+p[1]-1]+" "+p[0];
+}
+const cls=v=>v>=0?"pos":"neg";
+
+/* ================================================================= stats */
+function computeStats(rows,prevClose){
+  const start=rows[0].c,end=rows[rows.length-1].c;
+  let hi=rows[0],lo=rows[0],best=null,worst=null,up=0,dn=0,fl=0;
+  let peak=-Infinity,mdd=0,mddPeak=null,mddTrough=null,curPeak=null;
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    if(r.c>hi.c)hi=r; if(r.c<lo.c)lo=r;
+    /* first row uses the session before the range so no day is dropped */
+    const base=i?rows[i-1].c:prevClose;
+    if(base!=null){
+      const ch=(r.c-base)/base*100;
+      r._ch=ch;
+      if(!best||ch>best._ch)best=r;
+      if(!worst||ch<worst._ch)worst=r;
+      if(ch>0)up++;else if(ch<0)dn++;else fl++;
+    }
+    if(r.c>peak){peak=r.c;curPeak=r;}
+    const dd=(r.c-peak)/peak*100;
+    if(dd<mdd){mdd=dd;mddPeak=curPeak;mddTrough=r;}
+  }
+  const days=(rows[rows.length-1].t-rows[0].t)/86400000;
+  const ret=(end-start)/start*100;
+  return{
+    rows,start,end,ret,
+    cal:prevClose!=null?(end-prevClose)/prevClose*100:null,
+    first:rows[0],last:rows[rows.length-1],hi,lo,best,worst,up,dn,fl,n:rows.length,
+    mdd,mddPeak,mddTrough,
+    cagr:days>400?(Math.pow(end/start,365.25/days)-1)*100:null
+  };
+}
+
+/* Years are derived from the data, so a new calendar year appears on its own as sessions
+   arrive — nothing here is pinned to a hard-coded list of years. */
+const YEARS=[];
+const yearOf=y=>YEARS.find(x=>x.year===y);
+const CORE_START=2016;
+let WINDOW="core";
+const windowYears=()=>YEARS.filter(y=>WINDOW==="full"||y.year>=CORE_START);
+
+/* ================================================================= chart */
+const CHARTS={};
+const READY=typeof Chart!=="undefined";
+if(READY){
+  /* The UMD builds normally self-register; register defensively in case they do not.
+     The annotation plugin exposes itself under its hyphenated package name. */
+  [window.ChartZoom,window.ChartAnnotation,window["chartjs-plugin-annotation"]]
+    .forEach(p=>{if(p)try{Chart.register(p);}catch(e){}});
+  Chart.defaults.font.family="'JetBrains Mono',ui-monospace,Consolas,monospace";
+  Chart.defaults.font.size=11;
+  Chart.defaults.color="#7C8291";
+}else{
+  document.getElementById("cdnfail").style.display="block";
+}
+
+/* Bounds hug the data with asymmetric padding — more headroom above, because both the
+   HIGH and LOW callouts are drawn above their points. Paired with ticks.includeBounds
+   = false so Chart.js labels round interior values instead of these exact edges, which
+   also stops a long range from snapping its baseline down to zero and flattening the
+   early years. */
+function yBounds(lo,hi){
+  const span=(hi-lo)||Math.max(1,hi*0.02);
+  return{min:lo-span*0.07,max:hi+span*0.15};
+}
+
+function fillGrad(ctx,area,up){
+  if(!area)return"rgba(0,0,0,0)";
+  const g=ctx.createLinearGradient(0,area.top,0,area.bottom);
+  const rgb=up?"47,169,107":"224,85,69";
+  g.addColorStop(0,"rgba("+rgb+",0.26)");
+  g.addColorStop(1,"rgba("+rgb+",0.01)");
+  return g;
+}
+
+/* Events whose date falls inside a set of rows, in chronological order. */
+function eventsIn(rows){
+  const from=rows[0].iso,to=rows[rows.length-1].iso,out=[];
+  for(const e of EVENTS){
+    if(e.d<from||e.d>to)continue;
+    const row=rows.find(r=>r.iso===e.d);
+    if(row)out.push({row:row,text:e.t});
+  }
+  return out;
+}
+
+function buildAnnotations(st,rows){
+  const A={};
+  const span=rows[rows.length-1].t-rows[0].t||1;
+  /* An extreme sitting near an edge gets its label pushed inward, so it cannot
+     land on top of the start/end reference labels. */
+  /* 100px clears the width of the START / END edge labels entirely. */
+  const nudge=r=>{
+    const f=(r.t-rows[0].t)/span;
+    return f<0.18?100:f>0.82?-100:0;
+  };
+  A.startLine={
+    type:"line",yMin:st.start,yMax:st.start,
+    borderColor:"rgba(16,16,20,.32)",borderWidth:1.5,borderDash:[5,5],
+    label:{display:true,content:"START "+num(st.start),position:"start",
+      backgroundColor:"rgba(16,16,20,.88)",color:"#E9EBF0",font:{size:9.5,weight:"700"},
+      padding:{x:5,y:3},borderRadius:0,yAdjust:-11}
+  };
+  A.endLine={
+    type:"line",yMin:st.end,yMax:st.end,
+    borderColor:st.ret>=0?"rgba(27,127,75,.55)":"rgba(192,57,43,.55)",
+    borderWidth:1.5,borderDash:[5,5],
+    label:{display:true,content:"END "+num(st.end),position:"end",
+      backgroundColor:st.ret>=0?"#1B7F4B":"#C0392B",color:"#fff",
+      font:{size:9.5,weight:"700"},padding:{x:5,y:3},borderRadius:0,yAdjust:-11}
+  };
+  A.hiPt={
+    type:"point",xValue:st.hi.t,yValue:st.hi.c,radius:4.5,
+    backgroundColor:"#1B7F4B",borderColor:"#E9EBF0",borderWidth:2
+  };
+  A.hiLbl={
+    type:"label",xValue:st.hi.t,yValue:st.hi.c,content:["HIGH "+num(st.hi.c)],
+    font:{size:9.5,weight:"700"},color:"#0F5F38",yAdjust:-16,xAdjust:nudge(st.hi),
+    backgroundColor:"rgba(191,235,211,.94)",padding:4,borderRadius:0
+  };
+  A.loPt={
+    type:"point",xValue:st.lo.t,yValue:st.lo.c,radius:4.5,
+    backgroundColor:"#C0392B",borderColor:"#E9EBF0",borderWidth:2
+  };
+  /* Both callouts sit ABOVE their point. The low is by definition at the floor of the
+     scale, so a label below it would be clipped by the plot edge whatever grace is set. */
+  A.loLbl={
+    type:"label",xValue:st.lo.t,yValue:st.lo.c,content:["LOW "+num(st.lo.c)],
+    font:{size:9.5,weight:"700"},color:"#8E241A",yAdjust:-16,xAdjust:nudge(st.lo),
+    backgroundColor:"rgba(251,213,207,.94)",padding:4,borderRadius:0
+  };
+  /* Event markers are lines only — the caption lives in the strip under the chart and in
+     the tooltip. Over a long span there are too many to read as lines, so they are dropped
+     from the plot and left to the strip. */
+  const evs=eventsIn(rows);
+  if(evs.length<=10){
+    evs.forEach((e,i)=>{
+      A["ev"+i]={
+        type:"line",xMin:e.row.t,xMax:e.row.t,
+        borderColor:"rgba(44,44,224,.38)",borderWidth:1.5,borderDash:[3,4]
+      };
+    });
+  }
+  return A;
+}
+
+function makeLineChart(canvas,rows,st,opts){
+  if(!READY)return null;
+  const up=st.ret>=0;
+  const ch=new Chart(canvas.getContext("2d"),{
+    type:"line",
+    data:{datasets:[{
+      label:"NIFTY 50",
+      data:rows.map(r=>({x:r.t,y:r.c})),
+      borderColor:up?"#1B7F4B":"#C0392B",
+      borderWidth:2,pointRadius:0,pointHoverRadius:5,
+      pointHoverBackgroundColor:up?"#1B7F4B":"#C0392B",
+      pointHoverBorderColor:"#E9EBF0",pointHoverBorderWidth:2,
+      tension:0,fill:true,
+      backgroundColor:c=>fillGrad(c.chart.ctx,c.chart.chartArea,up)
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:false,
+      interaction:{mode:"index",intersect:false},
+      scales:{
+        x:{type:"time",time:{unit:opts&&opts.unit||"month",tooltipFormat:"dd MMM yyyy",
+             displayFormats:{day:"dd MMM",month:"MMM",year:"yyyy"}},
+           grid:{display:false},border:{color:"#C7CBD5"},
+           ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:opts&&opts.xticks||12,
+                  font:{size:10},color:"#7C8291"}},
+        y:Object.assign(yBounds(st.lo.c,st.hi.c),{
+           grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+           ticks:{callback:v=>NF0.format(v),font:{size:10},color:"#7C8291",
+                  maxTicksLimit:7,includeBounds:false}})
+      },
+      plugins:{
+        legend:{display:false},
+        annotation:{annotations:buildAnnotations(st,rows)},
+        tooltip:{
+          backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+          borderColor:"#101014",borderWidth:2,cornerRadius:0,padding:11,
+          titleFont:{size:11.5,weight:"700"},bodyFont:{size:11.5},displayColors:false,
+          callbacks:{
+            title:it=>fmtDateLong(rows[it[0].dataIndex].iso),
+            label:it=>{
+              const r=rows[it.dataIndex];
+              const out=["Close   "+num(r.c)];
+              if(r._ch!=null)out.push("Change  "+pct(r._ch));
+              out.push("O "+num(r.o)+"  H "+num(r.h)+"  L "+num(r.l));
+              if(EVENT_BY_DATE[r.iso])out.push("› "+EVENT_BY_DATE[r.iso]);
+              return out;
+            }
+          }
+        },
+        zoom:{
+          limits:{x:{min:"original",max:"original"}},
+          pan:{enabled:true,mode:"x",modifierKey:"shift"},
+          zoom:{wheel:{enabled:true,speed:.08},pinch:{enabled:true},
+                drag:{enabled:true,backgroundColor:"rgba(44,44,224,.13)",
+                      borderColor:"#2C2CE0",borderWidth:1},
+                mode:"x"}
+        }
+      }
+    }
+  });
+  return ch;
+}
+
+/* ================================================================= render */
+function statCard(k,v,note,c){
+  return '<div class="neu-in stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+
+         '</div>'+(note?'<div class="n">'+note+'</div>':'')+'</div>';
+}
+
+function statsHTML(st){
+  return statCard("Starting close",num(st.start),fmtDate(st.first.iso))
+    +statCard("Ending close",num(st.end),fmtDate(st.last.iso))
+    +statCard("Return",pct(st.ret),"first → last session",cls(st.ret))
+    +statCard("Highest close",num(st.hi.c),fmtDate(st.hi.iso))
+    +statCard("Lowest close",num(st.lo.c),fmtDate(st.lo.iso))
+    +statCard("Best day",st.best?pct(st.best._ch):"—",st.best?fmtDate(st.best.iso):"",st.best?cls(st.best._ch):"")
+    +statCard("Worst day",st.worst?pct(st.worst._ch):"—",st.worst?fmtDate(st.worst.iso):"",st.worst?cls(st.worst._ch):"")
+    +statCard("Positive days",String(st.up),st.n+" sessions","pos")
+    +statCard("Negative days",String(st.dn),st.fl+" unchanged","neg")
+    +(st.cagr!=null?statCard("Annualised",pct(st.cagr),"CAGR",cls(st.cagr)):"")
+    +statCard("Max drawdown",pct(st.mdd),st.mddPeak?fmtDate(st.mddPeak.iso)+" → "+fmtDate(st.mddTrough.iso):"","neg");
+}
+
+function eventsStripHTML(rows){
+  const evs=eventsIn(rows);
+  if(!evs.length)return"";
+  const CAP=14,shown=evs.slice(0,CAP),extra=evs.length-shown.length;
+  return '<div class="evstrip"><span class="lead">'
+    +(evs.length<=10?"Marked on the chart":"Notable dates in range")+'</span>'
+    +shown.map(e=>'<span class="ev"><b>'+fmtDate(e.row.iso)+'</b>'+e.text+'</span>').join("")
+    +(extra>0?'<span class="ev" style="opacity:.7">+'+extra+' more</span>':"")
+    +'</div>';
+}
+
+function movesHTML(rows){
+  const withCh=rows.filter(r=>r._ch!=null);
+  const ups=[...withCh].sort((a,b)=>b._ch-a._ch).slice(0,5);
+  const dns=[...withCh].sort((a,b)=>a._ch-b._ch).slice(0,5);
+  const row=r=>'<div class="moverow"><span class="d">'+fmtDate(r.iso)+'</span>'+
+    '<span class="p '+cls(r._ch)+'">'+pct(r._ch)+'</span>'+
+    '<span class="why">'+(EVENT_BY_DATE[r.iso]||"")+'</span></div>';
+  return '<div class="movegrid">'
+    +'<div class="movecol"><h4>Biggest gains</h4>'+ups.map(row).join("")+'</div>'
+    +'<div class="movecol"><h4>Biggest falls</h4>'+dns.map(row).join("")+'</div></div>';
+}
+
+function yearBlockHTML(y){
+  const st=y.stats,id="yc"+y.year;
+  return '<div class="neu yblock" id="year-'+y.year+'">'
+    +'<div class="yhead"><h3>'+y.year+(y.partial?' <span style="font-size:13px;color:#7C8291">partial</span>':'')+'</h3>'
+    +'<span class="badge '+(st.ret>=0?"up":"dn")+'">'+pct(st.ret)+'</span>'
+    +'<span class="span">'+fmtDate(st.first.iso)+' → '+fmtDate(st.last.iso)+' · '+st.n+' sessions</span></div>'
+    +'<div class="neu-in chartbox"><canvas id="'+id+'"></canvas></div>'
+    +'<div class="chartfoot"><span class="hint"><span class="d-only">Drag to zoom · scroll to zoom · shift-drag to pan</span><span class="m-only">Pinch to zoom · tap the line for any day · drag to pan</span></span>'
+    +'<button class="btn-reset" data-reset="'+id+'">Reset zoom</button></div>'
+    +eventsStripHTML(y.rows)
+    +'<div class="stats">'+statsHTML(st)+'</div>'
+    +movesHTML(y.rows)+'</div>';
+}
+
+let VIEW="2026";
+function renderYears(){
+  const host=document.getElementById("yearHost");
+  Object.keys(CHARTS).forEach(k=>{if(k.startsWith("yc")){CHARTS[k].destroy();delete CHARTS[k];}});
+  const list=VIEW==="all"?windowYears():[yearOf(+VIEW)].filter(Boolean);
+  host.innerHTML=list.map(yearBlockHTML).join("");
+  list.forEach(y=>{
+    const cv=document.getElementById("yc"+y.year);
+    if(cv){const c=makeLineChart(cv,y.rows,y.stats,{unit:"month",xticks:12});if(c)CHARTS["yc"+y.year]=c;}
+  });
+}
+
+function renderYearChips(){
+  const ys=windowYears();
+  if(!ys.some(y=>String(y.year)===VIEW)&&VIEW!=="all")VIEW=String(ys[ys.length-1].year);
+  const strip=document.getElementById("yearChips");
+  strip.innerHTML=
+    ys.map(y=>'<button class="chip'+(VIEW===String(y.year)?" on":"")+'" data-y="'+y.year+'">'+y.year+'</button>').join("")
+    +'<button class="chip wide'+(VIEW==="all"?" on":"")+'" data-y="all">Show all years</button>';
+  const sel=document.getElementById("yearSelect");
+  sel.innerHTML=ys.map(y=>'<option value="'+y.year+'">'+y.year+'</option>').join("")
+    +'<option value="all">Show all years</option>';
+  sel.value=VIEW;
+  /* on a phone the strip scrolls sideways, so keep the selected year in view */
+  const on=strip.querySelector(".chip.on");
+  if(on&&strip.scrollWidth>strip.clientWidth){
+    strip.scrollTo({left:on.offsetLeft-strip.clientWidth/2+on.offsetWidth/2,behavior:"smooth"});
+  }
+}
+
+function renderSummary(){
+  const tb=document.querySelector("#summaryTable tbody");
+  tb.innerHTML=windowYears().map(y=>{
+    const s=y.stats;
+    return '<tr data-y="'+y.year+'"'+(y.partial?' class="partial"':'')+'>'
+      +'<td class="y">'+y.year+'</td>'
+      +'<td data-l="First day">'+fmtDate(s.first.iso)+'</td>'
+      +'<td data-l="Starting close">'+num(s.start)+'</td>'
+      +'<td data-l="Last day">'+fmtDate(s.last.iso)+'</td>'
+      +'<td data-l="Ending close">'+num(s.end)+'</td>'
+      +'<td data-l="Annual return"><span class="chip-ret '+(s.ret>=0?"up":"dn")+'">'+pct(s.ret)+'</span></td>'
+      +'<td data-l="Calendar year" class="'+(s.cal==null?"muted":cls(s.cal))+'">'
+      +(s.cal==null?"—":pct(s.cal))+'</td></tr>';
+  }).join("");
+  tb.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",()=>{
+    VIEW=tr.dataset.y;renderYearChips();renderYears();
+    document.getElementById("years").scrollIntoView({behavior:"smooth",block:"start"});
+  }));
+}
+
+function renderSim(){
+  const tb=document.querySelector("#simTable tbody");
+  tb.innerHTML=windowYears().map(y=>{
+    const s=y.stats,end=10000*(s.end/s.start),g=end-10000;
+    return '<tr'+(y.partial?' class="partial"':'')+'><td class="y">'+y.year+'</td>'
+      +'<td data-l="Invested">₹10,000</td>'
+      +'<td data-l="Ending value"><b>'+rupee(end)+'</b></td>'
+      +'<td data-l="Gain / loss" class="'+cls(g)+'">'+(g>=0?"+":"−")+rupee(Math.abs(g)).slice(1)+'</td>'
+      +'<td data-l="Return"><span class="chip-ret '+(s.ret>=0?"up":"dn")+'">'+pct(s.ret)+'</span></td></tr>';
+  }).join("");
+}
+
+function renderReturnsChart(){
+  if(!READY)return;
+  if(CHARTS.ret){CHARTS.ret.destroy();delete CHARTS.ret;}
+  const ys=windowYears();
+  CHARTS.ret=new Chart(document.getElementById("returnsChart").getContext("2d"),{
+    type:"bar",
+    data:{labels:ys.map(y=>String(y.year)),datasets:[{
+      data:ys.map(y=>y.stats.ret),
+      backgroundColor:ys.map(y=>y.stats.ret>=0?"rgba(47,169,107,.85)":"rgba(224,85,69,.85)"),
+      borderColor:ys.map(y=>y.stats.ret>=0?"#1B7F4B":"#C0392B"),
+      borderWidth:2,borderRadius:4,borderSkipped:false
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:22}},
+      scales:{
+        x:{grid:{display:false},border:{color:"#C7CBD5"},ticks:{font:{size:10.5,weight:"700"},color:"#4A4F5C"}},
+        y:{grid:{color:"rgba(16,16,20,.07)"},border:{display:false},
+           ticks:{callback:v=>v+"%",font:{size:10},color:"#7C8291"}}
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#101014",titleColor:"#FFE24D",bodyColor:"#E9EBF0",
+          cornerRadius:0,padding:10,displayColors:false,
+          callbacks:{label:it=>"Return "+pct(it.raw)}
+        },
+        annotation:{annotations:{zero:{type:"line",yMin:0,yMax:0,borderColor:"rgba(16,16,20,.5)",borderWidth:1.5}}},
+        /* direct value labels so the bars never depend on colour alone */
+        barLabels:{}
+      }
+    },
+    plugins:[{
+      id:"barLabels",
+      afterDatasetsDraw(c){
+        const ctx=c.ctx;ctx.save();
+        ctx.font="700 10.5px 'JetBrains Mono',monospace";ctx.textAlign="center";
+        c.getDatasetMeta(0).data.forEach((b,i)=>{
+          const v=c.data.datasets[0].data[i];
+          ctx.fillStyle=v>=0?"#1B7F4B":"#C0392B";
+          ctx.textBaseline=v>=0?"bottom":"top";
+          ctx.fillText((v>=0?"+":"−")+Math.abs(v).toFixed(1),b.x,b.y+(v>=0?-6:6));
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function renderMoves(){
+  const big=ROWS.filter(r=>r._ch!=null&&Math.abs(r._ch)>=2.5)
+                .sort((a,b)=>Math.abs(b._ch)-Math.abs(a._ch));
+  document.querySelector("#movesTable tbody").innerHTML=big.slice(0,40).map(r=>{
+    const prev=ROWS[ROWS.indexOf(r)-1];
+    const pts=r.c-(prev?prev.c:r.c);
+    return '<tr><td class="y">'+fmtDate(r.iso)+'</td>'
+      +'<td data-l="Close">'+num(r.c)+'</td>'
+      +'<td data-l="Change"><span class="chip-ret '+(r._ch>=0?"up":"dn")+'">'+pct(r._ch)+'</span></td>'
+      +'<td data-l="Points" class="'+cls(pts)+'">'+(pts>=0?"+":"−")+NF0.format(Math.abs(Math.round(pts)))+'</td>'
+      +'<td data-l="Driver" style="text-align:left;white-space:normal;max-width:420px">'
+      +(EVENT_BY_DATE[r.iso]||'<span class="muted">not attributed</span>')+'</td></tr>';
+  }).join("");
+  return big.length;
+}
+
+/* ================================================================= range */
+function rowsBetween(a,b){return ROWS.filter(r=>r.iso>=a&&r.iso<=b);}
+function renderRange(){
+  const fi=document.getElementById("dFrom"),ti=document.getElementById("dTo");
+  let a=fi.value||ROWS[0].iso,b=ti.value||ROWS[ROWS.length-1].iso;
+  if(a>b){const t=a;a=b;b=t;}
+  const lo=ROWS[0].iso,hi=ROWS[ROWS.length-1].iso;
+  const notes=[];
+  if(a<lo){notes.push("History begins "+fmtDate(lo)+" — earlier dates have no NIFTY 50 data available.");a=lo;}
+  if(b>hi){notes.push("Data currently ends "+fmtDate(hi)+" — later dates will fill in as sessions happen.");b=hi;}
+  const rows=rowsBetween(a,b);
+  const note=document.getElementById("rangeNote");
+  if(rows.length<2){
+    note.textContent=notes.concat("Pick a range containing at least two trading sessions.").join("  ");
+    return;
+  }
+  note.textContent=notes.join("  ");
+  const idx=ROWS.indexOf(rows[0]);
+  const st=computeStats(rows,idx>0?ROWS[idx-1].c:null);
+  document.getElementById("rangeTitle").textContent=fmtDate(rows[0].iso)+" → "+fmtDate(rows[rows.length-1].iso);
+  const bd=document.getElementById("rangeBadge");
+  bd.textContent=pct(st.ret);bd.className="badge "+(st.ret>=0?"up":"dn");
+  const yrs=(rows[rows.length-1].t-rows[0].t)/31557600000;
+  document.getElementById("rangeSpan").textContent=st.n+" sessions · "+yrs.toFixed(1)+" years";
+  document.getElementById("rangeEvents").innerHTML=eventsStripHTML(rows);
+  document.getElementById("rangeStats").innerHTML=statsHTML(st);
+  document.getElementById("rangeMoves").innerHTML=movesHTML(rows);
+  if(CHARTS.range){CHARTS.range.destroy();delete CHARTS.range;}
+  const unit=yrs>6?"year":yrs>1.2?"month":yrs>0.25?"month":"day";
+  const c=makeLineChart(document.getElementById("rangeChart"),rows,st,{unit:unit,xticks:10});
+  if(c)CHARTS.range=c;
+}
+
+function applyPreset(p){
+  const last=ROWS[ROWS.length-1],end=new Date(last.t);
+  let start=new Date(last.t);
+  if(p==="1m")start.setMonth(start.getMonth()-1);
+  else if(p==="3m")start.setMonth(start.getMonth()-3);
+  else if(p==="6m")start.setMonth(start.getMonth()-6);
+  else if(p==="ytd")start=new Date(last.y,0,1);
+  else if(p==="1y")start.setFullYear(start.getFullYear()-1);
+  else if(p==="3y")start.setFullYear(start.getFullYear()-3);
+  else if(p==="5y")start.setFullYear(start.getFullYear()-5);
+  else if(p==="max")start=new Date(ROWS[0].t);
+  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  document.getElementById("dFrom").value=iso(start);
+  document.getElementById("dTo").value=iso(end);
+  renderRange();
+}
+
+/* ================================================================= chrome */
+function renderChrome(nBig){
+  const first=ROWS[0],last=ROWS[ROWS.length-1];
+  const core=YEARS.filter(y=>y.year>=CORE_START);
+  document.getElementById("titleRange").textContent=CORE_START+" → "+last.y;
+  const cum=(last.c-core[0].stats.start)/core[0].stats.start*100;
+  const ranked=[...YEARS].sort((a,b)=>b.stats.ret-a.stats.ret);
+  const best=ranked[0],worst=ranked[ranked.length-1];
+  document.getElementById("kpis").innerHTML=
+    '<div class="kpi accent"><div class="k">Latest close</div><div class="v">'+num(last.c)+
+      '</div><div class="s">'+fmtDateLong(last.iso)+'</div></div>'
+   +'<div class="neu kpi"><div class="k">Since 1 Jan '+CORE_START+'</div><div class="v '+cls(cum)+'">'+pct(cum)+
+      '</div><div class="s">'+num(core[0].stats.start)+' → '+num(last.c)+'</div></div>'
+   +'<div class="neu kpi"><div class="k">Trading sessions</div><div class="v">'+NF0.format(ROWS.length)+
+      '</div><div class="s">'+fmtDate(first.iso)+' → '+fmtDate(last.iso)+'</div></div>'
+   +'<div class="neu kpi"><div class="k">Best year</div><div class="v pos">'+best.year+
+      '</div><div class="s">'+pct(best.stats.ret)+'</div></div>'
+   +'<div class="neu kpi"><div class="k">Worst year</div><div class="v neg">'+worst.year+
+      '</div><div class="s">'+pct(worst.stats.ret)+'</div></div>'
+   +'<div class="neu kpi"><div class="k">Days moving over 2.5%</div><div class="v">'+nBig+
+      '</div><div class="s">out of '+NF0.format(ROWS.length)+' sessions</div></div>';
+  document.getElementById("tagrow").innerHTML=
+    '<span class="tag">'+NF0.format(ROWS.length)+' trading sessions</span>'
+   +'<span class="tag">'+fmtDate(first.iso)+' → '+fmtDate(last.iso)+'</span>'
+   +'<span class="tag">Daily granularity</span>'
+   +'<span class="tag" id="liveTag">Baseline data</span>';
+  document.getElementById("lastDateNote").textContent=
+    "Last available trading session: "+fmtDateLong(last.iso)+" · close "+num(last.c);
+  document.getElementById("footNote").textContent=
+    "NIFTY 50 price index · "+NF0.format(ROWS.length)+" daily sessions · "
+    +fmtDate(first.iso)+" → "+fmtDate(last.iso)+" · sources: NSE official archives + Yahoo Finance";
+}
+
+/* ================================================================= live */
+/* Served from Vercel the endpoint is same-origin. Opened straight off disk there is no
+   origin to be relative to, so the file falls back to the deployed copy; if that is
+   unreachable the page simply stays on its baseline data. */
+window.LIVE_ORIGIN="https://nifty50-historical-analysis.vercel.app";
+const LIVE_ENDPOINT="/api/nifty";
+async function topUp(){
+  const tag=document.getElementById("liveTag");
+  try{
+    const base=(location.protocol==="file:"&&window.LIVE_ORIGIN)?window.LIVE_ORIGIN+LIVE_ENDPOINT:LIVE_ENDPOINT;
+    const res=await fetch(base+"?since="+BASELINE_LAST,{cache:"no-store"});
+    if(!res.ok)throw new Error(res.status);
+    const j=await res.json();
+    if(!j.rows||!j.rows.length){tag.textContent="Up to date";tag.className="tag live";return;}
+    let added=0;
+    for(const r of j.rows){
+      if(r[0]<=ROWS[ROWS.length-1].iso)continue;
+      const p=r[0].split("-");
+      ROWS.push({y:+p[0],iso:r[0],t:new Date(+p[0],+p[1]-1,+p[2]).getTime(),
+                 o:r[1],h:r[2],l:r[3],c:r[4],chg:null});
+      added++;
+    }
+    if(!added){tag.textContent="Up to date";tag.className="tag live";return;}
+    for(let i=1;i<ROWS.length;i++)ROWS[i].chg=(ROWS[i].c-ROWS[i-1].c)/ROWS[i-1].c*100;
+    rebuildYears();
+    tag.textContent="+"+added+" new session"+(added>1?"s":"")+" live";
+    tag.className="tag live";
+    boot(true);
+  }catch(e){
+    tag.textContent="Baseline data";
+  }
+}
+function rebuildYears(){
+  YEARS.length=0;
+  let cur=null;
+  for(const r of ROWS){
+    if(!cur||cur.year!==r.y){cur={year:r.y,rows:[]};YEARS.push(cur);}
+    cur.rows.push(r);
+  }
+  for(let i=0;i<YEARS.length;i++){
+    const pr=i?YEARS[i-1].rows:null;
+    YEARS[i].stats=computeStats(YEARS[i].rows,pr?pr[pr.length-1].c:null);
+    YEARS[i].partial=(i===0||i===YEARS.length-1);
+  }
+}
+
+/* ================================================================= boot */
+function boot(isRefresh){
+  const nBig=renderMoves();
+  renderChrome(nBig);
+  renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();
+  if(!isRefresh){
+    const last=ROWS[ROWS.length-1];
+    const f=document.getElementById("dFrom"),t=document.getElementById("dTo");
+    f.min=t.min=ROWS[0].iso;
+    f.value=last.y+"-01-01";t.value=last.iso;
+  }
+  renderRange();
+}
+
+document.addEventListener("click",e=>{
+  const yb=e.target.closest("[data-y]");
+  if(yb&&yb.tagName==="BUTTON"){VIEW=yb.dataset.y;renderYearChips();renderYears();return;}
+  const wb=e.target.closest("[data-win]");
+  if(wb){
+    WINDOW=wb.dataset.win;
+    document.querySelectorAll("#windowSeg .chip").forEach(c=>c.classList.toggle("on",c.dataset.win===WINDOW));
+    renderYearChips();renderSummary();renderSim();renderReturnsChart();renderYears();return;
+  }
+  const pb=e.target.closest("[data-p]");
+  if(pb){
+    document.querySelectorAll("#presets .chip").forEach(c=>c.classList.toggle("on",c===pb));
+    applyPreset(pb.dataset.p);return;
+  }
+  const rb=e.target.closest("[data-reset]");
+  if(rb){const c=CHARTS[rb.dataset.reset]||(rb.dataset.reset==="rangeChart"?CHARTS.range:null);if(c)c.resetZoom();return;}
+  const gb=e.target.closest("[data-go]");
+  if(gb){
+    const t=document.getElementById(gb.dataset.go);
+    if(t)t.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+});
+
+/* Bottom-bar scroll spy: whichever section owns the middle of the screen is lit. */
+(function mobileNav(){
+  const btns=[...document.querySelectorAll("#mnav [data-go]")];
+  if(!btns.length)return;
+  const secs=btns.map(b=>document.getElementById(b.dataset.go)).filter(Boolean);
+  let raf=0;
+  function sync(){
+    raf=0;
+    const mid=window.innerHeight*0.42;
+    let best=0;
+    secs.forEach((s,i)=>{const r=s.getBoundingClientRect();if(r.top<=mid)best=i;});
+    btns.forEach((b,i)=>b.classList.toggle("on",i===best));
+  }
+  addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(sync);},{passive:true});
+  addEventListener("resize",sync,{passive:true});
+  sync();
+})();
+document.getElementById("yearSelect").addEventListener("change",e=>{
+  VIEW=e.target.value;renderYearChips();renderYears();
+});
+document.getElementById("dFrom").addEventListener("change",renderRange);
+document.getElementById("dTo").addEventListener("change",renderRange);
+
+/* deep link, e.g. #year-2020 */
+function applyDeepLink(){
+  if(!location.hash.startsWith("#year-"))return;
+  const y=location.hash.slice(6);
+  if(!YEARS.some(x=>String(x.year)===y))return;
+  if(+y<CORE_START){
+    WINDOW="full";
+    document.querySelectorAll("#windowSeg .chip")
+      .forEach(c=>c.classList.toggle("on",c.dataset.win==="full"));
+    renderSummary();renderSim();renderReturnsChart();
+  }
+  VIEW=y;renderYearChips();renderYears();
+  setTimeout(()=>document.getElementById("years").scrollIntoView({behavior:"smooth"}),120);
+}
+
+async function start(){
+  if(window.NIFTY_RAW_JSON){
+    hydrate(window.NIFTY_RAW_JSON);
+    boot(false);applyDeepLink();
+    topUp();                       /* baked-in data may be a few sessions behind */
+    return;
+  }
+  try{
+    const res=await fetch(LIVE_ENDPOINT+"?full=1",{cache:"no-store"});
+    if(!res.ok)throw new Error(res.status);
+    hydrate(await res.json());
+    boot(false);applyDeepLink();
+    const tag=document.getElementById("liveTag");
+    if(tag){tag.textContent="Live data";tag.className="tag live";}
+  }catch(e){
+    document.getElementById("cdnfail").innerHTML=
+      "<b>Could not load the price history.</b> This copy of the page fetches its dataset from "+
+      "its own API, which is currently unreachable. Reload in a moment, or open the downloadable "+
+      "version, which has the full dataset built in.";
+    document.getElementById("cdnfail").style.display="block";
+  }
+}
+start();
+</script>
+</body>
+</html>

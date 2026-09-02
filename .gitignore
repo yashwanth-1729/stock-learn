@@ -1,0 +1,5 @@
+.claude/
+.vercel/
+node_modules/
+*.log
+index.deploy.html
