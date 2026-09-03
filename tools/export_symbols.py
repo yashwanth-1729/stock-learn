@@ -14,17 +14,18 @@ Usage: python export_symbols.py [OUT_DIR] [--min-days N] [--adjust FILE]
 import datetime, json, os, sqlite3, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(HERE, "nse_eod.sqlite")
+DATA = os.path.join(os.path.dirname(HERE), "data")
+DB = os.path.join(DATA, "nse_eod.sqlite")
 EPOCH = datetime.date(1970, 1, 1)
 DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
-OUT = args[0] if args else os.path.join(HERE, "export")
+OUT = args[0] if args else os.path.join(DATA, "export")
 MIN_DAYS = 250
 ADJ = {}
 if "--min-days" in sys.argv:
     MIN_DAYS = int(sys.argv[sys.argv.index("--min-days") + 1])
-_adj_path = os.path.join(HERE, "..", "data", "adjustments.json")
+_adj_path = os.path.join(DATA, "adjustments.json")
 if "--adjust" in sys.argv:
     _adj_path = sys.argv[sys.argv.index("--adjust") + 1]
 if os.path.exists(_adj_path):

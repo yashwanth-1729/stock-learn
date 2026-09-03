@@ -15,7 +15,8 @@ Usage: python verify_vs_yahoo.py [N_SYMBOLS]
 import datetime, json, os, random, sqlite3, sys, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(HERE, "nse_eod.sqlite")
+DATA = os.path.join(os.path.dirname(HERE), "data")
+DB = os.path.join(DATA, "nse_eod.sqlite")
 EPOCH = datetime.date(1970, 1, 1)
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36", "Accept": "*/*"}

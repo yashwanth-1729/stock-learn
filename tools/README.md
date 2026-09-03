@@ -40,22 +40,73 @@ The four that did not were all explained by a corporate action the feed adjusts 
 | TATACOMM  | 1.611 → 1.000     | 2019-10-01 | demerger                     |
 | SMSPHARMA | 10.547 → 1.055 → 1.000 | 2015-12-17, 2017-07-07 | 10:1 split, then a bonus |
 
-The ratios are clean constants that step on a single day. That is the useful part: the
-adjustment factors are fully recoverable, so they can be derived once and then applied
-forever without depending on the feed.
+The ratios are clean constants that step on a single day. That is the useful part, and
+`derive_adjustments.py` below acts on it.
+
+## derive_adjustments.py
+
+Recovers the corporate-action factors from the data, so no corporate-actions feed has to
+be licensed.
+
+    python tools/derive_adjustments.py --min-days 250
+
+For any symbol `astraded / adjusted` is a step function — flat between actions, stepping
+the day one takes effect, 1.0 today. Comparing the two series once and segmenting that
+ratio recovers the whole timeline, and it captures splits, bonuses, rights issues and
+demergers alike without needing to know which occurred. The reference is used only to
+calibrate; afterwards the exchange's own prices stand alone.
+
+Result: **3,453 symbols mapped, 891 carrying corporate actions, 240 KB**. Reference
+series are cached, so re-deriving after a change to the algorithm takes under three
+minutes and touches the network not at all.
+
+Recovered timelines land on the real events:
+
+| Symbol   | Timeline |
+|----------|----------|
+| RELIANCE | 8.75 → 4.37 (2009 bonus) → 2.187 (2017 bonus) → 2.167 (2020 rights) → 2.0 (2023 Jio demerger) → 1.0 (2024 bonus) |
+| INFY     | 8 → 4 → 2 → 1 (three 1:1 bonuses) |
+| WIPRO    | 8.889 → 5.333 → 2.667 → 2.0 → 1.0 |
+| MRF      | none — it has never split |
+
+**Three things this got wrong first, all caught by verification rather than by reading
+the code:**
+
+1. The trailing 1.0 step was filtered out as uninteresting, which lost the date the last
+   action ends and left the previous factor applying forever after.
+2. A fixed 1.2% threshold merged away Reliance's May 2020 rights issue, which moved the
+   ratio by only 0.95%, stranding 657 sessions on the wrong factor.
+3. A single threshold cannot serve every symbol. Chasing noise gave one ETF 16 invented
+   "actions", and on one name the adjustment left agreement *worse* than doing nothing.
+
+So the derivation now scores several thresholds against the reference and keeps whichever
+reproduces it best — with the unadjusted series competing on equal terms. Adjustment can
+only be applied where it demonstrably helps. Symbols whose reference disagrees entirely
+(a ticker collision) are marked `unverified` rather than quietly adjusted.
+
+## verify_adjusted.py
+
+Applies the factors and repeats the comparison.
+
+    python tools/verify_adjusted.py 60
+
+On a 60-symbol sample weighted towards names with actions: **52.6% raw → 99.4% adjusted**.
+Across all 3,453 symbols the median match is **99.77%**; 125 sit below 98% and 4 are
+ticker collisions.
 
 ## export_symbols.py
 
 Writes per-symbol JSON in the same base-36 delta encoding `index.html` already decodes,
 so the front end needs no changes to read exchange-sourced data.
 
-    python tools/export_symbols.py data/export --min-days 250 [--splits splits.json]
+    python tools/export_symbols.py data/export --min-days 250
 
-First run: **3,453 symbols, 112 MB, 33 KB average per symbol.**
+**3,453 symbols, 110.6 MB, 32 KB average**, with 891 corporate-action adjusted from
+`adjustments.json` automatically. Encoding matches what `index.html` already decodes.
 
-Without a splits file the output is AS TRADED and is labelled so. Drawn raw, a 2:1 split
-renders as a 50% crash — which is why the adjustment step above is not optional before
-this becomes the serving source.
+The adjustment holds where it matters. At Reliance's action dates the exported series now
+moves −3.06%, −0.56%, +2.12%, −0.12%, +0.49% — ordinary days, rather than the −50%
+phantom crashes the raw prices would have drawn.
 
 ## Where the data lives
 
@@ -64,7 +115,10 @@ this becomes the serving source.
 
 ## Still to do before this replaces the feed
 
-1. Derive adjustment factors per symbol from the ratio steps, and store them.
-2. Point `api/quote.js` at the exported files, keeping the feed as a fallback.
-3. Put the export behind object storage or an edge database rather than the git repo —
-   112 MB of static JSON is fine for a CDN and much too heavy for a deployment bundle.
+1. Put the export behind object storage or an edge database rather than the git repo.
+   110 MB of static JSON is ideal for a CDN — 32 KB a request — and much too heavy for a
+   deployment bundle.
+2. Point `api/quote.js` at those files, keeping the feed as a fallback for symbols the
+   export does not carry.
+3. Schedule a daily `build_bhavcopy.py` run for the newest session, and re-derive factors
+   only for symbols whose latest ratio moves.

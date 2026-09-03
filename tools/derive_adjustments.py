@@ -37,6 +37,7 @@ GAP = 0.8                    # polite pacing against the reference feed
 STEP_TOL_MIN = 0.003         # floor: never treat a move under 0.3% as an action
 STEP_TOL_MAX = 0.030         # ceiling: keep very noisy penny stocks from inventing them
 CONFIRM = 5                  # sessions compared either side of a candidate break
+MIN_SEG = 10                 # a level must hold this long to count as a real action
 
 def arg(name, default=None):
     return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
@@ -94,7 +95,7 @@ def reference(sym):
     return out
 
 
-def segment(dates, ratios):
+def segment(dates, ratios, tol):
     """Split a ratio series into piecewise-constant levels.
 
     Compares the median of the K days before each point with the median of the K days
@@ -102,19 +103,15 @@ def segment(dates, ratios):
     invent a corporate action, and a window on each side so a genuine step is measured
     against settled levels either way.
 
-    The threshold calibrates itself to the symbol. Bhavcopy rounds to paise, so a ₹2,000
-    share carries almost no ratio noise while a ₹3 one carries plenty; a fixed cutoff
-    would either miss real events on the quiet names or invent them on the noisy ones.
-    Reliance's May 2020 rights issue moved the ratio by only 0.95%, which a blanket 1.2%
-    cutoff silently merged away — hence measuring the noise instead of assuming it.
+    `tol` is supplied by the caller, which tries several and keeps whichever actually
+    reproduces the reference best. A single fixed cutoff cannot work across the board:
+    Reliance's May 2020 rights issue moved the ratio by just 0.95% and needs a fine
+    threshold, while an illiquid ETF wobbles by more than that on tracking noise alone
+    and needs a coarse one.
     """
     n = len(ratios)
     if n < 2 * CONFIRM + 2:
         return [[dates[0].isoformat(), round(statistics.median(ratios), 6)]] if ratios else []
-
-    jitter = [abs(ratios[i] / ratios[i - 1] - 1) for i in range(1, n) if ratios[i - 1]]
-    noise = statistics.median(jitter) if jitter else 0.0
-    tol = max(STEP_TOL_MIN, min(STEP_TOL_MAX, noise * 12))
 
     K = CONFIRM
     cand = []
@@ -148,8 +145,8 @@ def segment(dates, ratios):
             jump = abs(ratios[j] / ratios[j - 1] - 1)
             if jump > best_jump:
                 best_jump, best = jump, j
-        if not refined or best > refined[-1]:
-            refined.append(best)
+        if not refined or best - refined[-1] >= MIN_SEG:
+            refined.append(best)          # levels shorter than MIN_SEG are noise, not events
 
     bounds = [0] + refined + [n]
     steps = []
@@ -195,7 +192,39 @@ for n, sym in enumerate(syms, 1):
         existing[sym] = {"steps": [], "checked": len(common), "note": "insufficient overlap"}
     else:
         ratios = [ours[(d - EPOCH).days] / ref[d] for d in common]
-        steps = segment(common, ratios)
+
+        # Trying one threshold and trusting it produced spurious "actions" on noisy
+        # names - an ETF came out with 16, and on one symbol the adjustment left
+        # agreement WORSE than leaving the prices alone. So several thresholds are
+        # tried and scored against the reference, and the untouched series competes
+        # on equal terms. Adjustment can now only ever be applied when it helps.
+        def score(st):
+            marks = sorted(((datetime.date.fromisoformat(d) - EPOCH).days, float(v))
+                           for d, v in st) if st else []
+            ok = 0
+            for d in common:
+                di = (d - EPOCH).days
+                f = 1.0
+                for md, mf in marks:
+                    if di >= md:
+                        f = mf
+                    else:
+                        break
+                if f <= 0:
+                    f = 1.0
+                if abs(ours[di] / f - ref[d]) <= max(0.02, ref[d] * 0.002):
+                    ok += 1
+            return ok / len(common)
+
+        jitter = [abs(ratios[i] / ratios[i - 1] - 1) for i in range(1, len(ratios)) if ratios[i - 1]]
+        noise = statistics.median(jitter) if jitter else 0.0
+        steps, best = [], score([])
+        for mult in (8, 12, 18, 28, 45):
+            tol = max(STEP_TOL_MIN, min(STEP_TOL_MAX, noise * mult))
+            cand_steps = segment(common, ratios, tol)
+            sc = score(cand_steps)
+            if sc > best + 1e-9:
+                best, steps = sc, cand_steps
         # Normalise so the most recent level is exactly 1.0 — today's prices are as traded.
         tail = steps[-1][1] if steps else 1.0
         if tail and abs(tail - 1) > 1e-9:
@@ -204,7 +233,12 @@ for n, sym in enumerate(syms, 1):
         # Dropping it would leave the previous factor applying forever afterwards.
         if len(steps) <= 1:
             steps = []
-        existing[sym] = {"steps": steps, "checked": len(common)}
+        existing[sym] = {"steps": steps, "checked": len(common),
+                         "match": round(best, 5)}
+        if best < 0.5:
+            # the reference series does not describe the same security - do not claim
+            # this symbol is verified either way
+            existing[sym]["note"] = "reference disagrees; unverified"
         if steps:
             adjusted_count += 1
     done += 1
